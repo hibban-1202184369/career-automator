@@ -662,6 +662,42 @@ function getAI(): GoogleGenerativeAI | null {
   return new GoogleGenerativeAI(key);
 }
 
+async function ask9RouterOpenAI(systemPrompt: string, userPrompt: string): Promise<string | null> {
+  try {
+    const cfg = getConfig();
+    const endpoint = (cfg.aiEndpoint || process.env.AI_ENDPOINT || "http://localhost:20128/v1").replace(/\/+$/, "");
+    const apiKey = cfg.aiApiKey || process.env.AI_API_KEY || "sk-4db70e2aec2e93fa-ezchah-33258d7e";
+    const model = cfg.aiModel || process.env.AI_MODEL || "MAUT";
+
+    if (!endpoint) return null;
+
+    const res = await fetch(`${endpoint}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 1500
+      }),
+      signal: AbortSignal.timeout(12000)
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    const text = json.choices?.[0]?.message?.content?.trim();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
 async function askLLM(
   question: string,
   options: string[],
@@ -671,11 +707,11 @@ async function askLLM(
   const dynamicSkills = getDynamicSkills();
   const cfg = getConfig();
 
-  if (type === "text" || options.length === 0) {
-    const prompt = `You are answering a job application screening question on behalf of a candidate.
+  const fableAstraSystem = `You are an elite Recruitment Screening Analyst powered by Claude Fable 5.1 analytical rigor and GPT Astra operational execution. Answer screening questions accurately, professionally, and directly based strictly on candidate facts.`;
 
-Candidate profile:
-- Role/Skills: ${dynamicSkills.slice(0, 15).join(', ')})
+  if (type === "text" || options.length === 0) {
+    const prompt = `Candidate profile:
+- Role/Skills: ${dynamicSkills.slice(0, 15).join(', ')}
 - Experience: ${profile.defaultExperienceYears} years
 - Education: ${profile.educationLevel}, GPA: ${profile.gpa}
 - Expected salary: Rp ${profile.expectedMonthlySalaryIDR.toLocaleString("id-ID")}
@@ -685,6 +721,11 @@ Question: "${question}"
 
 Reply with a concise, highly professional, direct answer (1-2 sentences maximum, or just the number/fact if it's a simple factual question). Reply in the same language as the question (Indonesian or English).`;
 
+    // 1. Primary Engine: 9Router (Fable 5.1 + GPT Astra combo)
+    const n9Text = await ask9RouterOpenAI(fableAstraSystem, prompt);
+    if (n9Text) return [n9Text];
+
+    // 2. Secondary Engine: Google Gemini
     try {
       const aiClient = getAI();
       if (aiClient) {
@@ -733,6 +774,15 @@ Allowed options (copy chosen ones verbatim): ${options.map((o) => `"${o}"`).join
 
 Reply with ONLY the chosen option(s), copied exactly from the list. If choosing multiple, separate them with " || ". Nothing else.`;
 
+  // 1. Primary Engine: 9Router (Fable 5.1 + GPT Astra)
+  const n9Text = await ask9RouterOpenAI(fableAstraSystem, prompt);
+  if (n9Text) {
+    const picked = n9Text.split("||").map((s: string) => s.trim());
+    const valid = picked.filter((p: string) => options.includes(p));
+    if (valid.length > 0) return valid;
+  }
+
+  // 2. Secondary Engine: Google Gemini
   try {
     const aiClient = getAI();
     if (aiClient) {
