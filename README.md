@@ -1,11 +1,11 @@
 # 🚀 Career Automator
 
-A professional-grade job application automation engine designed to streamline the application process for high-value roles in IT GRC, Cybersecurity, and Network Engineering. This tool leverages AI to handle tedious screening questions and maximize application efficiency.
+A professional-grade job application automation engine designed to streamline the application process for high-value roles across various industries. This tool leverages AI to handle tedious screening questions and maximize application efficiency.
 
 ## 🌟 Key Features
 
-- **🎯 Industry-Specific Targeting**: Optimized for GRC (Governance, Risk, and Compliance), Network Infrastructure, and IT Audit roles.
-- **🤖 Intelligent Screening**: Integrated with LLMs (via Gemini API) to automatically and accurately answer complex screening questions based on the user's professional profile.
+- **🎯 Fully Customizable Targeting**: Users can define their own target industries, roles, and keywords (e.g., GRC, Network Engineering, Finance, Healthcare, etc.) directly through the dashboard.
+- **🤖 Intelligent Screening**: Integrated with LLMs (via Gemini API) to automatically and accurately answer complex screening questions based on the user's specific professional profile.
 - **🌐 Multi-Platform Support**: Automated application flows for **LinkedIn**, **Jobstreet**, **Glints**, and **Indeed**.
 - **🛡️ Anti-Detection Engine**: Utilizes real browser sessions to bypass bot detection and maintain account safety.
 - **📊 Real-time Tracking**: Seamless integration with Google Sheets for application history and progress monitoring.
@@ -32,7 +32,7 @@ npm run dev
 Access the dashboard at `http://localhost:3000` and configure:
 - **API Keys**: Set up your Gemini and Google Cloud credentials.
 - **Profile**: Input your professional details (Education, GPA, Experience).
-- **Keywords**: Define your target roles (e.g., "IT Auditor", "Network Engineer").
+- **Keywords**: Define your target roles and industries (e.g., "IT Auditor", "Financial Analyst", "Project Manager").
 
 ### 3. Deployment
 The easiest way to deploy is via **Vercel**:
@@ -47,4 +47,4 @@ To avoid account flags, it is recommended to:
 - Keep concurrency low (**1-2 workers**).
 
 ---
-*Designed for professionals seeking high-impact roles in Mining, Energy, and Offshore sectors.*
+*Empowering professionals to accelerate their career growth across all sectors.*
