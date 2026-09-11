@@ -70,7 +70,15 @@ export default function Page() {
       .then((res) => res.json())
       .then((data) => {
         if (data && !data.error) {
-          setConfig((prev) => ({ ...prev, ...data }));
+          const d: any = data.config || data;
+          // Sync engine limitPerDay -> UI maxApplicationsDaily
+          if (d.limitPerDay !== undefined && d.maxApplicationsDaily === undefined) {
+            d.maxApplicationsDaily = String(d.limitPerDay);
+          }
+          if (d.maxApplicationsDaily !== undefined && d.limitPerDay === undefined) {
+            d.limitPerDay = parseInt(d.maxApplicationsDaily) || 0;
+          }
+          setConfig((prev) => ({ ...prev, ...d }));
         }
       })
       .catch((e) => console.error('Failed to load config:', e));
@@ -105,10 +113,19 @@ export default function Page() {
     setSavingConfig(true);
     setSaveMessage('');
     try {
+      // Sync before save: keep engine field limitPerDay in sync with UI maxApplicationsDaily
+      const payload: any = { ...config };
+      if (payload.maxApplicationsDaily !== undefined) {
+        const n = parseInt(payload.maxApplicationsDaily) || 0;
+        payload.limitPerDay = n;
+        payload.maxApplicationsDaily = String(n);
+      } else if (payload.limitPerDay !== undefined) {
+        payload.maxApplicationsDaily = String(payload.limitPerDay);
+      }
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
@@ -498,12 +515,18 @@ export default function Page() {
                     <input
                       type="text"
                       value={config.maxApplicationsDaily}
-                      onChange={(e) => setConfig({ ...config, maxApplicationsDaily: e.target.value })}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setConfig({ ...config, maxApplicationsDaily: v, limitPerDay: parseInt(v) || 0 } as any);
+                      }}
                       className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
                       placeholder="50"
                     />
+                    <p className="text-[11px] text-slate-500 mt-1">Sinkron otomatis → <code className="text-slate-400">limitPerDay</code> engine</p>
                   </div>
-              {/* Platform Toggles & Limits */}
+                </div>
+
+              {/* Platform Toggles & Limits — sibling of grid, full width */}
               <div className="p-6 rounded-2xl bg-[#070913] border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold tracking-widest uppercase text-slate-400">Sumber Lowongan & Limit Platform</h4>
@@ -560,7 +583,6 @@ export default function Page() {
                   <span className="text-slate-300">Mode Debug Test (dry-run tanpa submit lamaran)</span>
                 </label>
               </div>
-                </div>
               </div>
             </form>
           )}
