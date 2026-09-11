@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Page() {
-  const [activeNav, setActiveNav] = useState<'dashboard' | 'bot' | 'ai' | 'profile' | 'sheets' | 'questions' | 'logs' | 'history'>('dashboard');
+  const [activeNav, setActiveNav] = useState<'dashboard' | 'bot' | 'profile' | 'sheets' | 'questions' | 'logs' | 'history'>('dashboard');
 
   // Config State
   const [config, setConfig] = useState({
@@ -11,9 +11,6 @@ export default function Page() {
     sheetName: 'Sheet1',
     googleCredentialsJson: '',
     geminiApiKey: '',
-    aiEndpoint: 'http://localhost:20128/v1',
-    aiApiKey: 'sk-4db70e2aec2e93fa-ezchah-33258d7e',
-    aiModel: 'MAUT',
     searchKeywords: 'Network Engineer, IT GRC, IT Auditor, MIS',
     location: 'Indonesia',
     minSalary: '8000000',
@@ -46,11 +43,6 @@ export default function Page() {
   const [sheetsChecking, setSheetsChecking] = useState(false);
   const [sheetsResult, setSheetsResult] = useState<any>(null);
 
-  // AI Fit Analyzer State
-  const [targetRoleInput, setTargetRoleInput] = useState('IT GRC & Network Security Lead');
-  const [jobDescInput, setJobDescInput] = useState('');
-  const [analyzingJob, setAnalyzingJob] = useState(false);
-  const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null);
 
   // Load config on mount
   useEffect(() => {
@@ -72,6 +64,7 @@ export default function Page() {
       const res = await fetch('/api/questions');
       const data = await res.json();
       if (Array.isArray(data)) setQuestions(data);
+      else if (Array.isArray(data.questions)) setQuestions(data.questions);
     } catch (e) {
       console.error(e);
     }
@@ -188,27 +181,6 @@ export default function Page() {
     }
   };
 
-  const handleRunAiAnalysis = async () => {
-    setAnalyzingJob(true);
-    setAiAnalysisResult(null);
-    try {
-      const res = await fetch('/api/ai-analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetRole: targetRoleInput, jobDescription: jobDescInput })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAiAnalysisResult(data.analysis);
-      } else {
-        alert(data.error || 'Analisis Gagal');
-      }
-    } catch (e: any) {
-      alert(`Error: ${e.message}`);
-    } finally {
-      setAnalyzingJob(false);
-    }
-  };
 
   const filteredQuestions = questions.filter(
     (q) =>
@@ -232,7 +204,7 @@ export default function Page() {
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span className="text-[11px] text-emerald-400 font-medium tracking-wide">Fable 5.1 & Astra Active</span>
+                <span className="text-[11px] text-emerald-400 font-medium tracking-wide">AI Auto-Answer Active</span>
               </div>
             </div>
           </div>
@@ -242,7 +214,6 @@ export default function Page() {
             {[
               { id: 'dashboard', label: 'Command Center', icon: '⚡' },
               { id: 'bot', label: 'Bot Engine Setup', icon: '⚙️' },
-              { id: 'ai', label: 'AI Intelligence (Fable)', icon: '🧠' },
               { id: 'profile', label: 'Candidate Profile', icon: '👤' },
               { id: 'sheets', label: 'Google Sheets DB', icon: '📊' },
               { id: 'questions', label: 'Screening Q&A', icon: '📋' },
@@ -268,12 +239,12 @@ export default function Page() {
         {/* Sidebar Footer / Quick Status */}
         <div className="p-4 m-4 rounded-xl bg-[#0f172a] border border-[#232d59] text-xs space-y-2">
           <div className="flex justify-between items-center text-slate-400">
-            <span>Gateway 9Router</span>
-            <span className="text-emerald-400 font-mono">Connected</span>
+            <span>AI Engine</span>
+            <span className="text-emerald-400 font-mono">Gemini Ready</span>
           </div>
           <div className="flex justify-between items-center text-slate-400">
-            <span>Model Combo</span>
-            <span className="text-indigo-300 font-mono">MAUT (Free)</span>
+            <span>Answer Engine</span>
+            <span className="text-indigo-300 font-mono">Fable & Astra Logic</span>
           </div>
           <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500 flex justify-between">
             <span>v2.5 Pro Enterprise</span>
@@ -292,7 +263,6 @@ export default function Page() {
               <h2 className="text-lg font-bold capitalize tracking-tight text-white flex items-center gap-2">
                 {activeNav === 'dashboard' && 'Command Center Overview'}
                 {activeNav === 'bot' && 'Bot Engine Automation Settings'}
-                {activeNav === 'ai' && 'AI Intelligence & Fable 5.1 / GPT Astra Hub'}
                 {activeNav === 'profile' && 'Candidate Professional Profile'}
                 {activeNav === 'sheets' && 'Google Sheets & Credentials Database'}
                 {activeNav === 'questions' && 'Screening Questions Intelligence Base'}
@@ -365,7 +335,7 @@ export default function Page() {
                 {[
                   { label: 'Total Applications', val: historyItems.length, icon: '📈', color: 'from-blue-600 to-indigo-600' },
                   { label: 'Screening Questions Q&A', val: questions.length, icon: '📋', color: 'from-purple-600 to-pink-600' },
-                  { label: 'AI Reasoning Engine', val: config.aiModel || 'MAUT', icon: '🧠', color: 'from-emerald-600 to-teal-600' },
+                  { label: 'Q&A Knowledge Base', val: questions.length + ' entries', icon: '🧠', color: 'from-emerald-600 to-teal-600' },
                   { label: 'Bot Status', val: isBotRunning ? 'Running 🚀' : 'Idle 🟢', icon: '⚡', color: 'from-amber-600 to-orange-600' },
                 ].map((stat, i) => (
                   <div key={i} className="p-6 rounded-2xl bg-[#0f172a] border border-[#232d59] relative overflow-hidden shadow-xl">
@@ -394,7 +364,7 @@ export default function Page() {
                     </span>
                   </div>
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    Career Automator runs automated job scouting, screening question evaluation via <span className="text-indigo-400 font-semibold">Fable 5.1 & GPT Astra</span>, and syncs application audits directly into your Google Sheets database.
+                    Career Automator menjalankan pencarian lowongan otomatis, menjawab screening dengan logika <span className="text-indigo-400 font-semibold">Fable 5.1 & GPT Astra (internal)</span>, dan mencatat hasil lamaran ke Google Sheets Anda.
                   </p>
                   <div className="flex flex-wrap gap-4 pt-2">
                     <button
@@ -429,12 +399,12 @@ export default function Page() {
                   </h3>
                   <div className="space-y-4 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">9Router AI Gateway</span>
+                      <span className="text-slate-400">Gemini AI</span>
                       <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">Online</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">AI Model Combo</span>
-                      <span className="text-indigo-300 font-mono font-semibold">MAUT (Fallback)</span>
+                      <span className="text-slate-400">Reasoning Mode</span>
+                      <span className="text-indigo-300 font-mono font-semibold">Fable + Astra</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Google Sheets DB</span>
@@ -444,10 +414,10 @@ export default function Page() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setActiveNav('ai')}
+                    onClick={() => setActiveNav('questions')}
                     className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700 text-center block"
                   >
-                    Test AI & Fit Analyzer →
+                    Lihat Q&A Knowledge Base →
                   </button>
                 </div>
               </div>
@@ -519,145 +489,6 @@ export default function Page() {
           )}
 
           {/* 3. AI INTELLIGENCE & FABLE 5.1 / GPT ASTRA HUB */}
-          {activeNav === 'ai' && (
-            <div className="space-y-8">
-              <form onSubmit={handleSaveConfig} className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <span>🧠</span>
-                    <span>AI Engine & Gateway Configuration (9Router & Gemini)</span>
-                  </h3>
-                  <button
-                    type="submit"
-                    disabled={savingConfig}
-                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30"
-                  >
-                    {savingConfig ? 'Menyimpan...' : 'Simpan AI Config'}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">9Router Endpoint URL</label>
-                    <input
-                      type="text"
-                      value={config.aiEndpoint}
-                      onChange={(e) => setConfig({ ...config, aiEndpoint: e.target.value })}
-                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
-                      placeholder="http://localhost:20128/v1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">9Router API Key</label>
-                    <input
-                      type="password"
-                      value={config.aiApiKey}
-                      onChange={(e) => setConfig({ ...config, aiApiKey: e.target.value })}
-                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
-                      placeholder="sk-4db70e2aec2e93fa..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">Model Combo / ID (Fable / Astra / MAUT)</label>
-                    <input
-                      type="text"
-                      value={config.aiModel}
-                      onChange={(e) => setConfig({ ...config, aiModel: e.target.value })}
-                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
-                      placeholder="MAUT"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-800">
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Google Gemini API Key (Secondary Fallback Engine)</label>
-                  <input
-                    type="password"
-                    value={config.geminiApiKey}
-                    onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value })}
-                    className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
-                    placeholder="AIzaSy..."
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Gemini API key is securely located exclusively in Bot Configuration / AI Hub.
-                  </p>
-                </div>
-              </form>
-
-              {/* Fable 5.1 & GPT Astra Job Fit Analyzer Widget */}
-              <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <span>🧪</span>
-                    <span>Fable 5.1 & GPT Astra Live Job Fit Analyzer</span>
-                  </h3>
-                  <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    Analytical Reasoning Tool
-                  </span>
-                </div>
-                <p className="text-sm text-slate-300">
-                  Test the analytical capability of Fable 5.1 and GPT Astra on any target job description before deploying the automated application bot.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">Target Role Title</label>
-                    <input
-                      type="text"
-                      value={targetRoleInput}
-                      onChange={(e) => setTargetRoleInput(e.target.value)}
-                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">Job Description Context (Opsional)</label>
-                    <textarea
-                      rows={3}
-                      value={jobDescInput}
-                      onChange={(e) => setJobDescInput(e.target.value)}
-                      placeholder="Paste job description here..."
-                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
-                    ></textarea>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleRunAiAnalysis}
-                  disabled={analyzingJob}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 disabled:opacity-50"
-                >
-                  {analyzingJob ? '🤖 Fable & Astra sedang menganalisis...' : 'Jalankan Fable & Astra Fit Analysis 🚀'}
-                </button>
-
-                {aiAnalysisResult && (
-                  <div className="mt-6 p-6 rounded-2xl bg-[#070913] border border-indigo-500/30 space-y-4 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-bold text-white text-base">Hasil Analisis Kecocokan (Fit Report)</h4>
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold">
-                        Score: {aiAnalysisResult.matchScore}% ({aiAnalysisResult.fitVerdict})
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 font-semibold mb-1">Key Strengths:</p>
-                      <ul className="list-disc list-inside text-sm text-slate-200 space-y-1">
-                        {aiAnalysisResult.keyStrengths?.map((s: string, idx: number) => (
-                          <li key={idx}>{s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 font-semibold mb-1">Strategic Pitch (Value Proposition):</p>
-                      <p className="text-sm text-indigo-200 italic bg-indigo-950/40 p-3 rounded-xl border border-indigo-900/50">
-                        "{aiAnalysisResult.strategicPitch}"
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 4. CANDIDATE PROFILE VIEW */}
           {activeNav === 'profile' && (
             <form onSubmit={handleSaveConfig} className="space-y-8">
               <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">

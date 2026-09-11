@@ -662,42 +662,6 @@ function getAI(): GoogleGenerativeAI | null {
   return new GoogleGenerativeAI(key);
 }
 
-async function ask9RouterOpenAI(systemPrompt: string, userPrompt: string): Promise<string | null> {
-  try {
-    const cfg = getConfig();
-    const endpoint = (cfg.aiEndpoint || process.env.AI_ENDPOINT || "http://localhost:20128/v1").replace(/\/+$/, "");
-    const apiKey = cfg.aiApiKey || process.env.AI_API_KEY || "sk-4db70e2aec2e93fa-ezchah-33258d7e";
-    const model = cfg.aiModel || process.env.AI_MODEL || "MAUT";
-
-    if (!endpoint) return null;
-
-    const res = await fetch(`${endpoint}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.1,
-        max_tokens: 1500
-      }),
-      signal: AbortSignal.timeout(12000)
-    });
-
-    if (!res.ok) return null;
-    const json = await res.json();
-    const text = json.choices?.[0]?.message?.content?.trim();
-    return text || null;
-  } catch {
-    return null;
-  }
-}
-
 async function askLLM(
   question: string,
   options: string[],
@@ -707,25 +671,23 @@ async function askLLM(
   const dynamicSkills = getDynamicSkills();
   const cfg = getConfig();
 
-  const fableAstraSystem = `You are an elite Recruitment Screening Analyst powered by Claude Fable 5.1 analytical rigor and GPT Astra operational execution. Answer screening questions accurately, professionally, and directly based strictly on candidate facts.`;
+  // Fable 5.1 + GPT Astra reasoning is EMBEDDED as system instruction - no external gateway needed
+  const systemLogic = "You are an elite Recruitment Screening Analyst applying Fable 5.1 rigor (verifiable, evidence-only, zero hallucination) and GPT Astra execution (surgical, outcome-first, direct). Answer strictly from candidate facts.";
 
   if (type === "text" || options.length === 0) {
-    const prompt = `Candidate profile:
-- Role/Skills: ${dynamicSkills.slice(0, 15).join(', ')}
-- Experience: ${profile.defaultExperienceYears} years
-- Education: ${profile.educationLevel}, GPA: ${profile.gpa}
-- Expected salary: Rp ${profile.expectedMonthlySalaryIDR.toLocaleString("id-ID")}
-- Availability: ${profile.noticePeriod}
+    const prompt = systemLogic + `
 
-Question: "${question}"
+Candidate profile:
+- Role/Skills: ` + "${dynamicSkills.slice(0, 15).join(', ')}" + `
+- Experience: ` + "${profile.defaultExperienceYears} years" + `
+- Education: ` + "${profile.educationLevel}, GPA: ${profile.gpa}" + `
+- Expected salary: Rp ` + "${profile.expectedMonthlySalaryIDR.toLocaleString(\"id-ID\")}" + `
+- Availability: ` + "${profile.noticePeriod}" + `
 
-Reply with a concise, highly professional, direct answer (1-2 sentences maximum, or just the number/fact if it's a simple factual question). Reply in the same language as the question (Indonesian or English).`;
+Question: "` + '${question}' + `"
 
-    // 1. Primary Engine: 9Router (Fable 5.1 + GPT Astra combo)
-    const n9Text = await ask9RouterOpenAI(fableAstraSystem, prompt);
-    if (n9Text) return [n9Text];
+Reply concise (1-2 sentences), professional, same language as question.`;
 
-    // 2. Secondary Engine: Google Gemini
     try {
       const aiClient = getAI();
       if (aiClient) {
@@ -736,7 +698,7 @@ Reply with a concise, highly professional, direct answer (1-2 sentences maximum,
       }
     } catch {}
 
-    // Smart context-aware fallback based on question intent
+    // Context-aware fallback (Fable/Astra style: deterministic before guessing)
     const lowerQ = question.toLowerCase();
     if (/notice|asap|join|mulai kerja|bergabung/i.test(lowerQ)) {
       const notice = profile.noticePeriod || "Immediately";
@@ -750,39 +712,28 @@ Reply with a concise, highly professional, direct answer (1-2 sentences maximum,
     if (/phone|telepon|hp|mobile/i.test(lowerQ)) return [cfg.phoneNumber || ""];
     if (/name|nama/i.test(lowerQ)) return [cfg.fullName || ""];
     if (/why|alasan|describe|ceritakan|jelaskan|introduce/i.test(lowerQ)) {
-      return [`I have ${profile.defaultExperienceYears}+ years of professional experience with strong expertise in ${dynamicSkills.slice(0, 6).join(", ")}.`];
+      return [`I have ` + "${profile.defaultExperienceYears}" + `+ years of professional experience with strong expertise in ` + "${dynamicSkills.slice(0, 6).join(\", \")}" + `.`];
     }
     return ["Yes"];
   }
 
   const multiSelect = type === "checklist";
 
-  const prompt = `You are filling out a job application screening question on behalf of a candidate.
+  const prompt = systemLogic + `
 
 Candidate profile:
-- Expected monthly salary: Rp ${profile.expectedMonthlySalaryIDR.toLocaleString("id-ID")}
-- Education: ${profile.educationLevel}
-- Experience: ${profile.experienceByRole
-    .map((e) => `${e.keywords[0]}: ${e.years} years`)
-    .join(", ")}; default ${profile.defaultExperienceYears} years for anything else.
-- Right to work: ${profile.workRights.en}
-- Known tools: ${profile.knownTools.join(", ")}
+- Expected monthly salary: Rp ` + "${profile.expectedMonthlySalaryIDR.toLocaleString(\"id-ID\")}" + `
+- Education: ` + "${profile.educationLevel}" + `
+- Experience: ` + "${profile.experienceByRole.map((e) => `${e.keywords[0]}: ${e.years} years`).join(\", \")}" + `; default ` + "${profile.defaultExperienceYears} years for anything else." + `
+- Right to work: ` + "${profile.workRights.en}" + `
+- Known tools: ` + "${profile.knownTools.join(\", \")}" + `
 
-Question: "${question}"
-Question type: ${type} (${multiSelect ? "you may choose MULTIPLE options" : "choose exactly ONE option"})
-Allowed options (copy chosen ones verbatim): ${options.map((o) => `"${o}"`).join(" | ")}
+Question: "` + '${question}' + `"
+Question type: ` + '${type}' + ` (` + '${multiSelect ? "you may choose MULTIPLE options" : "choose exactly ONE option"}' + `)
+Allowed options (copy chosen ones verbatim): ` + '${options.map((o) => `"${o}"`).join(" | ")}' + `
 
 Reply with ONLY the chosen option(s), copied exactly from the list. If choosing multiple, separate them with " || ". Nothing else.`;
 
-  // 1. Primary Engine: 9Router (Fable 5.1 + GPT Astra)
-  const n9Text = await ask9RouterOpenAI(fableAstraSystem, prompt);
-  if (n9Text) {
-    const picked = n9Text.split("||").map((s: string) => s.trim());
-    const valid = picked.filter((p: string) => options.includes(p));
-    if (valid.length > 0) return valid;
-  }
-
-  // 2. Secondary Engine: Google Gemini
   try {
     const aiClient = getAI();
     if (aiClient) {
@@ -800,6 +751,7 @@ Reply with ONLY the chosen option(s), copied exactly from the list. If choosing 
   const firstMatch = options.find(o => /^(ya|yes|setuju|agree|fluent|mahir|sarjana|s1|full-time|wfo|hybrid|remote)$/i.test(o.trim()));
   return [firstMatch || options[0] || ""];
 }
+
 
 // ---------------------------------------------------------------------------
 // 6. Main pipeline
