@@ -5,6 +5,7 @@ export interface AppConfig {
   spreadsheetId: string;
   sheetName: string;
   googleCredentialsJson: string;
+  geminiApiKey: string;
   searchKeywords: string;
   location: string;
   minSalary: string;
@@ -44,6 +45,7 @@ const DEFAULT_CONFIG: AppConfig = {
   spreadsheetId: '',
   sheetName: 'Sheet1',
   googleCredentialsJson: '',
+  geminiApiKey: '',
   searchKeywords: '',
   location: '',
   minSalary: '',
@@ -63,17 +65,17 @@ const DEFAULT_CONFIG: AppConfig = {
   useSystemChrome: true,
   customChromePath: '',
   noticePeriod: 'Immediately',
-  fullName: 'Yoga Adi Saputra',
+  fullName: 'Full Name',
   expectedSalary: 8000000,
-  educationLevel: 'Sarjana (S1)',
-  gpa: '3.75',
-  yearsOfExperience: 3,
-  skills: 'JavaScript, TypeScript, Python, Java, C#, C++, PHP, Go, HTML, CSS, React, React.js, Next.js, Angular, Angular.js, Tailwind CSS, Bootstrap, jQuery, Framer Motion, Three.js, React Three Fiber, Drei, Node.js, Express.js, Fiber, GORM, REST API, RESTful API, Redis, RabbitMQ, Celery, Asynq, Message Queue, Kafka, PostgreSQL, MySQL, Supabase, Prisma, SQL, Docker, Nginx, PM2, Git, GitHub, GitHub Actions, Cloudflare, Let\'s Encrypt, Certbot, CI/CD, Postman, VS Code, Full Stack Development, Backend Development, Frontend Development, Web Development, API Development, Database Design, Microservices, Object-Oriented Programming, Asynchronous Programming, Blender, TouchDesigner, MediaPipe, Figma, ClickUp, Jira, Trello, Slack, Notion, Agile, Scrum, Problem Solving, Debugging',
-  portfolioUrl: 'https://github.com/yogaadi',
-  githubUrl: 'https://github.com/yogaadi',
-  linkedinUrl: 'https://www.linkedin.com',
-  phoneNumber: '081234567890',
-  domicile: 'Jakarta Selatan, DKI Jakarta',
+  educationLevel: 'Bachelor/Master',
+  gpa: '0.00',
+  yearsOfExperience: 0,
+  skills: '',
+  portfolioUrl: '',
+  githubUrl: '',
+  linkedinUrl: '',
+  phoneNumber: '',
+  domicile: '',
 };
 
 export function getConfig(): AppConfig {

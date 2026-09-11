@@ -23,9 +23,10 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
     const config = getConfig();
 
     // Verify GEMINI_API_KEY is set in environment or .env
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === '') {
-      throw new Error('GEMINI_API_KEY is missing in your .env file. Please configure it and restart the server.');
+    if (!config.geminiApiKey || config.geminiApiKey.trim() === '') {
+      throw new Error('GEMINI_API_KEY is missing in your profile settings. Please fill it in the Profile tab.');
     }
+
 
     if (!config.searchKeywords && !config.indeedNoJobTitleFilter) {
       throw new Error('Search keywords are not configured. Please fill them in first.');
