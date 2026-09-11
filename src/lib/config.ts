@@ -6,6 +6,8 @@ export interface AppConfig {
   sheetName: string;
   googleCredentialsJson: string;
   geminiApiKey: string;
+  aiEndpoint: string;
+  aiApiKey: string;
   searchKeywords: string;
   location: string;
   minSalary: string;
@@ -46,6 +48,8 @@ const DEFAULT_CONFIG: AppConfig = {
   sheetName: 'Sheet1',
   googleCredentialsJson: '',
   geminiApiKey: '',
+  aiEndpoint: 'http://localhost:20128/v1',
+  aiApiKey: 'sk-4db70e2aec2e93fa-ezchah-33258d7e',
   searchKeywords: '',
   location: '',
   minSalary: '',
