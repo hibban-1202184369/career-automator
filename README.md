@@ -1,13 +1,13 @@
 # 🚀 Career Automator
 
-A professional-grade job application automation engine tailored for high-value roles in IT GRC, Cybersecurity, and Network Engineering. This tool is designed to bridge the gap between technical expertise and the tedious process of online applications.
+A professional-grade job application automation engine designed to streamline the application process for high-value roles in IT GRC, Cybersecurity, and Network Engineering. This tool leverages AI to handle tedious screening questions and maximize application efficiency.
 
 ## 🌟 Key Features
 
-- **🎯 Surgical Targeting**: Specifically optimized for GRC (Governance, Risk, and Compliance), Network Infrastructure, and IT Audit roles.
-- **🤖 Intelligent Screening**: Integrated with LLMs (via Gemini API) to automatically and accurately answer complex screening questions based on a professional Magister (S2) profile.
+- **🎯 Industry-Specific Targeting**: Optimized for GRC (Governance, Risk, and Compliance), Network Infrastructure, and IT Audit roles.
+- **🤖 Intelligent Screening**: Integrated with LLMs (via Gemini API) to automatically and accurately answer complex screening questions based on the user's professional profile.
 - **🌐 Multi-Platform Support**: Automated application flows for **LinkedIn**, **Jobstreet**, **Glints**, and **Indeed**.
-- **🛡️ Anti-Detection Engine**: Utilizes real Google Chrome sessions to bypass bot detection and maintain account safety.
+- **🛡️ Anti-Detection Engine**: Utilizes real browser sessions to bypass bot detection and maintain account safety.
 - **📊 Real-time Tracking**: Seamless integration with Google Sheets for application history and progress monitoring.
 
 ## 🛠️ Technical Stack
@@ -31,7 +31,7 @@ npm run dev
 ### 2. Configuration
 Access the dashboard at `http://localhost:3000` and configure:
 - **API Keys**: Set up your Gemini and Google Cloud credentials.
-- **Profile**: Update your professional details (Education: Magister S2, GPA, Experience).
+- **Profile**: Input your professional details (Education, GPA, Experience).
 - **Keywords**: Define your target roles (e.g., "IT Auditor", "Network Engineer").
 
 ### 3. Deployment
@@ -47,4 +47,4 @@ To avoid account flags, it is recommended to:
 - Keep concurrency low (**1-2 workers**).
 
 ---
-*Developed for high-impact career growth in Mining, Energy, and Offshore sectors.*
+*Designed for professionals seeking high-impact roles in Mining, Energy, and Offshore sectors.*
