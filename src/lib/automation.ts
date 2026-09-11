@@ -16,16 +16,19 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
   }
 
   global.isBotRunning = true;
-  onLog(`🚀 Starting CV Blaster Engine in ${mode.toUpperCase()} mode...`);
+  onLog(`🚀 Starting Career Automator Engine in ${mode.toUpperCase()} mode...`);
 
   let browser: any = null;
   try {
     const config = getConfig();
 
-    // Verify GEMINI_API_KEY is set in environment or .env
-    if (!config.geminiApiKey || config.geminiApiKey.trim() === '') {
-      throw new Error('GEMINI_API_KEY is missing in your profile settings. Please fill it in the Profile tab.');
+    // Verify GEMINI_API_KEY - fallback to environment variable if not in profile
+    const effectiveApiKey = (config.geminiApiKey?.trim() || process.env.GEMINI_API_KEY || '').trim();
+    if (!effectiveApiKey) {
+      throw new Error('GEMINI_API_KEY tidak ditemukan. Isi di tab Profil atau set environment variable GEMINI_API_KEY di Vercel.');
     }
+    // Inject the resolved key into config for downstream use
+    config.geminiApiKey = effectiveApiKey;
 
 
     if (!config.searchKeywords && !config.indeedNoJobTitleFilter) {
