@@ -329,7 +329,7 @@ function tryRegexAnswer(
 
   // 2. Kontak: Nomor Telepon, Handphone, Mobile, WhatsApp
   if (/^(?:phone|telephone|mobile|handphone|nomor\s*hp|nomor\s*telepon|nomor\s*wa|whatsapp|telp)(\s*\*|\s*:)?$/i.test(q) || /\b(phone|mobile|telepon|handphone|hp)\b/i.test(q)) {
-    return [cfg.phoneNumber || "081234567890"];
+    return [cfg.phoneNumber || ""];
   }
 
   // 3. Email
@@ -648,7 +648,19 @@ function tryRegexAnswer(
 // 5. LLM fallback for anything regex couldn't classify
 // ---------------------------------------------------------------------------
 
-const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+function getApiKey(): string {
+  try {
+    const cfg = getConfig();
+    if (cfg.geminiApiKey && cfg.geminiApiKey.trim() !== "") return cfg.geminiApiKey.trim();
+  } catch {}
+  return process.env.GEMINI_API_KEY || "";
+}
+
+function getAI(): GoogleGenerativeAI | null {
+  const key = getApiKey();
+  if (!key) return null;
+  return new GoogleGenerativeAI(key);
+}
 
 async function askLLM(
   question: string,
@@ -663,7 +675,7 @@ async function askLLM(
     const prompt = `You are answering a job application screening question on behalf of a candidate.
 
 Candidate profile:
-- Role: Full Stack Developer (Skills: ${dynamicSkills.slice(0, 15).join(', ')})
+- Role/Skills: ${dynamicSkills.slice(0, 15).join(', ')})
 - Experience: ${profile.defaultExperienceYears} years
 - Education: ${profile.educationLevel}, GPA: ${profile.gpa}
 - Expected salary: Rp ${profile.expectedMonthlySalaryIDR.toLocaleString("id-ID")}
@@ -674,8 +686,9 @@ Question: "${question}"
 Reply with a concise, highly professional, direct answer (1-2 sentences maximum, or just the number/fact if it's a simple factual question). Reply in the same language as the question (Indonesian or English).`;
 
     try {
-      if (process.env.GEMINI_API_KEY) {
-        const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const aiClient = getAI();
+      if (aiClient) {
+        const model = aiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(prompt);
         const text = (result.response.text() || "").trim();
         if (text) return [text];
@@ -693,10 +706,10 @@ Reply with a concise, highly professional, direct answer (1-2 sentences maximum,
     if (/experience|tahun/i.test(lowerQ)) return [String(profile.defaultExperienceYears || 3)];
     if (/project|proyek/i.test(lowerQ)) return ["4"];
     if (/age|umur|usia/i.test(lowerQ)) return ["24"];
-    if (/phone|telepon|hp|mobile/i.test(lowerQ)) return [cfg.phoneNumber || "081234567890"];
-    if (/name|nama/i.test(lowerQ)) return [cfg.fullName || "Yoga Adi Saputra"];
+    if (/phone|telepon|hp|mobile/i.test(lowerQ)) return [cfg.phoneNumber || ""];
+    if (/name|nama/i.test(lowerQ)) return [cfg.fullName || ""];
     if (/why|alasan|describe|ceritakan|jelaskan|introduce/i.test(lowerQ)) {
-      return ["I have 3+ years of experience as a Software Engineer specializing in full stack web development, building robust and scalable applications."];
+      return [`I have ${profile.defaultExperienceYears}+ years of professional experience with strong expertise in ${dynamicSkills.slice(0, 6).join(", ")}.`];
     }
     return ["Yes"];
   }
@@ -721,8 +734,9 @@ Allowed options (copy chosen ones verbatim): ${options.map((o) => `"${o}"`).join
 Reply with ONLY the chosen option(s), copied exactly from the list. If choosing multiple, separate them with " || ". Nothing else.`;
 
   try {
-    if (process.env.GEMINI_API_KEY) {
-      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const aiClient = getAI();
+    if (aiClient) {
+      const model = aiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(prompt);
       const text = (result.response.text() || "").trim();
 
