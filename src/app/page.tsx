@@ -931,22 +931,6 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
-                    🔑 Gemini API Key (Wajib — Milik Anda Sendiri)
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="Tempel API Key Gemini Anda di sini (gratis dari aistudio.google.com)"
-                    value={config.geminiApiKey || ''}
-                    onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value })}
-                    className="w-full bg-slate-900 border border-emerald-800/60 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
-                  />
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Bot AI memakai key ini untuk menjawab pertanyaan screening otomatis. Setiap pengguna memakai API key miliknya sendiri.
-                  </p>
-                </div>
-
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                     Nama Lengkap
