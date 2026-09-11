@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CV Blaster Dashboard",
+  title: "Career Automator",
   description: "Automate CV applications to multiple job portals",
 };
 
