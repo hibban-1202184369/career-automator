@@ -25,6 +25,7 @@ export interface AppConfig {
   concurrency: number;
   useSystemChrome?: boolean;
   customChromePath?: string;
+  browserWsEndpoint?: string;
   noticePeriod: string;
   // Candidate Profile Fields
   fullName: string;
@@ -66,6 +67,7 @@ const DEFAULT_CONFIG: AppConfig = {
   concurrency: 3,
   useSystemChrome: true,
   customChromePath: '',
+  browserWsEndpoint: '',
   noticePeriod: 'Immediately',
   fullName: '',
   expectedSalary: 0,
@@ -139,6 +141,7 @@ export function getConfig(): AppConfig {
     'CONCURRENCY': 'concurrency',
     'USE_SYSTEM_CHROME': 'useSystemChrome',
     'CUSTOM_CHROME_PATH': 'customChromePath',
+    'BROWSER_WS_ENDPOINT': 'browserWsEndpoint',
     'NOTICE_PERIOD': 'noticePeriod',
     'FULL_NAME': 'fullName',
     'EXPECTED_SALARY': 'expectedSalary',

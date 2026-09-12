@@ -74,8 +74,24 @@ export async function launchBrowserWithFallback(
   const log = onLog || console.log;
 
   // ----------------------------------------------------
-  // ATTEMPT 1: Official Google Chrome (System Chrome)
+  // ATTEMPT 0: Remote WebSocket (Camoufox / Browserless / VPS)
   // ----------------------------------------------------
+  if (config.browserWsEndpoint && config.browserWsEndpoint.trim().length > 0) {
+    const wsEndpoint = config.browserWsEndpoint.trim();
+    try {
+      log(`🌐 Menghubungkan ke Remote Browser WebSocket (${wsEndpoint})...`);
+      const browser = await puppeteer.connect({ browserWSEndpoint: wsEndpoint });
+      const version = await browser.version().catch(() => 'Unknown');
+      log(`✅ Berhasil terhubung ke Remote Browser [${version}]`);
+      return {
+        browser,
+        browserType: 'google-chrome' // generic fallback type
+      };
+    } catch (wsError: any) {
+      log(`⚠️ Gagal terhubung ke Remote Browser WebSocket: ${wsError.message || wsError}`);
+      log(`🔄 Beralih mencoba Local Chrome / Chromium...`);
+    }
+  }
   if (config.useSystemChrome !== false) {
     const customPath = config.customChromePath ? config.customChromePath.trim() : '';
     const isCustomPath = customPath.length > 0;
