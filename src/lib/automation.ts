@@ -1,5 +1,5 @@
 import path from 'path';
-import { getConfig } from './config';
+import { getConfig, AppConfig } from './config';
 import { runGlintsBot } from './bots/glints';
 import { runJobstreetBot } from './bots/jobstreet';
 import { runLinkedinBot } from './bots/linkedin';
@@ -9,7 +9,7 @@ declare global {
   var isBotRunning: boolean;
 }
 
-export async function startBot(onLog: (msg: string) => void, mode: string = 'headless') {
+export async function startBot(onLog: (msg: string) => void, mode: string = 'headless', rawConfig?: AppConfig) {
   if (global.isBotRunning) {
     onLog('⚠️ Bot is already running!');
     return;
@@ -18,24 +18,21 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
   global.isBotRunning = true;
   onLog(`🚀 Starting Career Automator Engine in ${mode.toUpperCase()} mode...`);
 
+  // Fallback to default/stored config if not provided
+  const config: AppConfig = rawConfig || getConfig();
+
   let browser: any = null;
   try {
-    const config = getConfig();
-
-    // Verify GEMINI_API_KEY - fallback to environment variable if not in profile
-    const effectiveApiKey = (config.geminiApiKey?.trim() || process.env.GEMINI_API_KEY || '').trim();
+    const effectiveApiKey = (config?.geminiApiKey?.trim() || process.env.GEMINI_API_KEY || '').trim();
     if (!effectiveApiKey) {
-      throw new Error('GEMINI_API_KEY tidak ditemukan. Isi di tab Profil atau set environment variable GEMINI_API_KEY di Vercel.');
+      throw new Error('GEMINI_API_KEY tidak ditemukan. Isi di tab Bot Engine Setup.');
     }
-    // Inject the resolved key into config for downstream use
     config.geminiApiKey = effectiveApiKey;
-
 
     if (!config.searchKeywords && !config.indeedNoJobTitleFilter) {
       throw new Error('Search keywords are not configured. Please fill them in first.');
     }
 
-    // Test Google Sheets connection
     onLog('📊 Menguji koneksi ke Google Sheets...');
     const { testSheetsConnection } = require('./googleSheets');
     const sheetsTest = await testSheetsConnection();

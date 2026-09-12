@@ -172,7 +172,9 @@ export default function Page() {
     setIsBotRunning(true);
     setActiveNav('logs');
 
-    const eventSource = new EventSource(`/api/run-bot?mode=${mode}`);
+    // Pass config via query string for stateless bot start (GET request)
+    const configQuery = encodeURIComponent(JSON.stringify(config));
+    const eventSource = new EventSource(`/api/run-bot?mode=${mode}&config=${configQuery}`);
     eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
