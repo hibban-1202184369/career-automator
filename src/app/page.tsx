@@ -491,7 +491,7 @@ export default function Page() {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-amber-400/90 mb-2">🚫 Exclude Keywords (Pengecualian — biar tidak masuk riba/perbankan)</label>
+                    <label className="block text-xs font-semibold text-amber-400/90 mb-2">🚫 Exclude Keywords (Pengecualian)</label>
                     <input
                       type="text"
                       value={(config as any).excludeKeywords || ""}
@@ -605,7 +605,7 @@ export default function Page() {
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <span>👤</span>
-                    <span>Candidate Professional Profile (3-Column Layout)</span>
+                    <span>Candidate Professional Profile</span>
                   </h3>
                   <button
                     type="submit"
