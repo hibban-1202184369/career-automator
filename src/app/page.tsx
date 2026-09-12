@@ -811,6 +811,20 @@ export default function Page() {
                     placeholder="{ ... }"
                   ></textarea>
                 <div className="mt-6 pt-6 border-t border-slate-800">
+                  <label className="block text-xs font-semibold text-slate-300 mb-2">Remote Browser WebSocket Endpoint (Opsional: Koyeb / VPS Camoufox / Browserless WS)</label>
+                  <input
+                    type="text"
+                    value={(config as any).browserWsEndpoint || ''}
+                    onChange={(e) => setConfig({ ...config, browserWsEndpoint: e.target.value } as any)}
+                    className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                    placeholder="ws://your-vps-ip:7860 or wss://browserless.example.com"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    Kosongkan untuk menggunakan Chrome/Chromium lokal. Isi URL WebSocket jika Anda menjalankan remote browser tanpa kartu di VPS/Koyeb.
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-slate-800">
                   <label className="block text-xs font-semibold text-slate-300 mb-2">Gemini API Key (Auto-Jawab Screening - Fable & Astra Logic)</label>
                   <input
                     type="password"
