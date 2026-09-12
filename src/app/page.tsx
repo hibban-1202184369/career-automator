@@ -245,7 +245,14 @@ export default function Page() {
       formData.append('cv', file);
       formData.append('apiKey', apiKey);
       const res = await fetch('/api/optimize-cv', { method: 'POST', body: formData });
-      const data = await res.json();
+      const text = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setCvResult({ success: false, error: text ? text.slice(0, 200) : 'Response kosong dari server (Unexpected end of JSON input). Coba file PDF lebih kecil (<2MB) atau cek API Key.' });
+        return;
+      }
       if (!data.success) {
         setCvResult({ success: false, error: data.error || 'Gagal mengoptimalkan CV' });
         return;

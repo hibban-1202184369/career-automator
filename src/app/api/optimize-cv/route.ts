@@ -28,14 +28,14 @@ export async function POST(request: Request) {
         const parsed = await pdfParse(buffer);
         cvText = parsed.text;
       } catch (err: any) {
-        return NextResponse.json({ success: false, error: `Gagal membaca file PDF CV: ${err.message || err}` }, { status: 400 });
+        return NextResponse.json({ success: false, error: `Gagal membaca file PDF CV: ${err.message || err}. Pastikan file PDF tidak terenkripsi.` }, { status: 400 });
       }
     } else {
       cvText = buffer.toString('utf8');
     }
 
-    if (!cvText || cvText.trim().length < 20) {
-      return NextResponse.json({ success: false, error: 'Teks CV terlalu pendek atau tidak dapat dibaca.' }, { status: 400 });
+    if (!cvText || cvText.trim().length < 10) {
+      return NextResponse.json({ success: false, error: 'Teks CV terlalu pendek atau kosong.' }, { status: 400 });
     }
 
     // Call Gemini to analyze & optimize
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     const prompt = `
 Anda adalah expert ATS CV Optimizer & Career Coach profesional.
-Analisis teks CV berikut, optimalkan untuk standar ATS, dan ekstrak informasinya dalam format JSON murni (tanpa markdown backticks, hanya JSON valid) dengan struktur persis seperti berikut:
+Analisis teks CV berikut, optimalkan untuk standar ATS, dan ekstrak informasinya DALAM FORMAT JSON MURNI (tanpa teks pengantar, tanpa markdown backticks, hanya objek JSON valid) dengan struktur persis seperti berikut:
 
 {
   "fullName": "Nama Lengkap",
@@ -69,8 +69,13 @@ ${cvText.slice(0, 15000)}
 ---
 `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    let responseText = '';
+    try {
+      const result = await model.generateContent(prompt);
+      responseText = result.response.text();
+    } catch (geminiErr: any) {
+      return NextResponse.json({ success: false, error: `Gemini API Error: ${geminiErr.message || geminiErr}` }, { status: 400 });
+    }
 
     // Clean up markdown code blocks if any
     let jsonStr = responseText.trim();
@@ -84,12 +89,15 @@ ${cvText.slice(0, 15000)}
     try {
       extractedData = JSON.parse(jsonStr);
     } catch (e) {
-      // fallback regex search for json
       const match = jsonStr.match(/\{[\s\S]*\}/);
       if (match) {
-        extractedData = JSON.parse(match[0]);
+        try {
+          extractedData = JSON.parse(match[0]);
+        } catch (innerE) {
+          return NextResponse.json({ success: false, error: 'Gagal memparsing respons AI ke format JSON.', raw: jsonStr.slice(0, 200) }, { status: 400 });
+        }
       } else {
-        throw new Error('Gagal memparsing hasil AI ke format JSON.');
+        return NextResponse.json({ success: false, error: 'Format JSON dari AI tidak valid.', raw: jsonStr.slice(0, 200) }, { status: 400 });
       }
     }
 
