@@ -76,7 +76,7 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
     };
     (config as any).__isExcluded = isExcluded;
     if (excludeList.length > 0) {
-      onLog(`🚫 Filter Pengecualian Aktif: ${excludeList.join(', ')} (cek judul + perusahaan, cth: Bank/Riba dilewati).`);
+      onLog(`🚫 Filter Pengecualian Aktif: ${excludeList.join(', ')} (cek judul + perusahaan).`);
     }
 
     const glintsLimiter = {

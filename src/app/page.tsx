@@ -12,6 +12,7 @@ export default function Page() {
     googleCredentialsJson: '',
     geminiApiKey: '',
     searchKeywords: 'Network Engineer, IT GRC, IT Auditor, MIS',
+    excludeKeywords: 'Bank, Banking, Bank Konvensional, Pinjaman, Kredit, Leasing, Asuransi Konvensional, Riba',
     location: 'Indonesia',
     minSalary: '8000000',
     maxApplicationsDaily: '50',
