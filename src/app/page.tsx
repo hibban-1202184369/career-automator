@@ -500,7 +500,7 @@ export default function Page() {
                       className="w-full bg-[#070913] border border-amber-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500 font-mono"
                       placeholder="Contoh: kata kunci 1, kata kunci 2, kata kunci 3"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1">Pisahkan dengan koma — setiap kata/frasa yang muncul di <b className="text-slate-400">judul atau nama perusahaan</b> akan otomatis <span className="text-amber-400 font-semibold">dilewati (skip)</span>. Contoh: <code className="text-slate-400">Network Engineer</code> + exclude <code className="text-amber-400">Bank, Riba</code></p>
+                    <p className="text-[11px] text-slate-500 mt-1">Pisahkan dengan koma — setiap kata/frasa yang muncul di <b className="text-slate-400">judul atau nama perusahaan</b> akan otomatis <span className="text-amber-400 font-semibold">dilewati (skip)</span>. Contoh: <code className="text-slate-400">Network Engineer</code> + exclude <code className="text-amber-400">kata kunci</code></p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-2">Target Location (Lokasi)</label>
