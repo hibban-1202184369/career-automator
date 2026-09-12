@@ -67,8 +67,15 @@ export default function Page() {
   const [geminiResult, setGeminiResult] = useState<any>(null);
 
 
-  // Load config on mount
+  // Load config on mount - also restore Gemini key from localStorage cache
   useEffect(() => {
+    // Try localStorage cache first for instant fill
+    try {
+      const cached = typeof window !== 'undefined' ? localStorage.getItem('career_automator_gemini_key') : null;
+      if (cached && !config.geminiApiKey) {
+        setConfig((prev: any) => ({ ...prev, geminiApiKey: cached }));
+      }
+    } catch {}
     fetch('/api/config')
       .then((res) => res.json())
       .then((data) => {
@@ -82,6 +89,8 @@ export default function Page() {
             d.limitPerDay = parseInt(d.maxApplicationsDaily) || 0;
           }
           setConfig((prev) => ({ ...prev, ...d }));
+          // Cache Gemini key to localStorage for persistence across sessions
+          try { if ((d as any).geminiApiKey) localStorage.setItem('career_automator_gemini_key', (d as any).geminiApiKey); } catch {}
         }
       })
       .catch((e) => console.error('Failed to load config:', e));
@@ -89,6 +98,16 @@ export default function Page() {
     fetchQuestions();
     fetchAppliedHistory();
   }, []);
+
+  // Persist Gemini key to localStorage & cookie whenever it changes
+  useEffect(() => {
+    try {
+      if ((config as any).geminiApiKey?.trim()) {
+        localStorage.setItem('career_automator_gemini_key', (config as any).geminiApiKey.trim());
+        document.cookie = `gemini_api_key=${encodeURIComponent((config as any).geminiApiKey.trim())}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+    } catch {}
+  }, [(config as any).geminiApiKey]);
 
   const fetchQuestions = async () => {
     try {
@@ -111,8 +130,8 @@ export default function Page() {
     }
   };
 
-  const handleSaveConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveConfig = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setSavingConfig(true);
     setSaveMessage('');
     try {
@@ -388,6 +407,47 @@ export default function Page() {
           {/* 1. DASHBOARD VIEW */}
           {activeNav === 'dashboard' && (
             <div className="space-y-8">
+              {/* 🧠 AI BRAIN - GEMINI API KEY (langsung isi di Command Center) */}
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 space-y-4 shadow-xl shadow-indigo-900/20">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h4 className="text-xs font-bold tracking-widest uppercase text-indigo-300">🧠 AI Brain — Gemini API Key</h4>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleTestGemini}
+                      disabled={geminiChecking}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700 disabled:opacity-50"
+                    >
+                      {geminiChecking ? 'Menguji...' : 'Test 🔑'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveConfig()}
+                      disabled={savingConfig}
+                      className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 disabled:opacity-50"
+                    >
+                      {savingConfig ? 'Menyimpan...' : 'Simpan'}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Kunci utama sistem — digunakan untuk <span className="text-slate-200 font-semibold">scraping & analisis lowongan</span> serta <span className="text-slate-200 font-semibold">auto-jawab screening</span>. Tersimpan otomatis di browser (cache) & server.
+                </p>
+                <input
+                  type="password"
+                  value={(config as any).geminiApiKey || ''}
+                  onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value } as any)}
+                  onBlur={() => { if ((config as any).geminiApiKey?.trim()) handleSaveConfig(); }}
+                  className="w-full bg-[#070913] border border-indigo-500/40 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-400 font-mono text-xs"
+                  placeholder="AIzaSy... tempel API key Anda di sini"
+                />
+                {geminiResult && (
+                  <span className={`text-xs font-mono block ${(geminiResult as any).success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {(geminiResult as any).success ? '✅ Koneksi Berhasil!' : `❌ ${(geminiResult as any).error}` }
+                  </span>
+                )}
+              </div>
+
               {/* Metric Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {[
@@ -489,36 +549,6 @@ export default function Page() {
           {/* 2. BOT ENGINE SETTINGS VIEW */}
           {activeNav === 'bot' && (
             <form onSubmit={handleSaveConfig} className="space-y-8">
-              {/* 🧠 AI BRAIN - GEMINI (OTAK UTAMA) */}
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 space-y-4 shadow-xl shadow-indigo-900/20">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold tracking-widest uppercase text-indigo-300">🧠 AI Brain — Gemini API Key (Otak Utama)</h4>
-                  <button
-                    type="button"
-                    onClick={handleTestGemini}
-                    disabled={geminiChecking}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 border border-indigo-500/30"
-                  >
-                    {geminiChecking ? 'Menguji...' : 'Test Koneksi Gemini 🔑'}
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Kunci utama sistem — digunakan untuk <span className="text-slate-200 font-semibold">scraping & analisis lowongan</span> serta <span className="text-slate-200 font-semibold">auto-jawab screening</span> (Fable & Astra Logic). Wajib diisi agar bot berjalan.
-                </p>
-                <input
-                  type="password"
-                  value={(config as any).geminiApiKey || ''}
-                  onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value } as any)}
-                  className="w-full bg-[#070913] border border-indigo-500/40 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-400 font-mono text-xs"
-                  placeholder="AIzaSy... tempel API key Anda di sini"
-                />
-                {geminiResult && (
-                  <span className={`text-xs font-mono ${(geminiResult as any).success ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {(geminiResult as any).success ? '✅ Koneksi Berhasil!' : `❌ ${(geminiResult as any).error}` }
-                  </span>
-                )}
-              </div>
-
               <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
