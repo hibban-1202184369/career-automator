@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { launchBrowserWithFallback } from '@/lib/browserHelper';
+import fs from 'fs';
 
 declare global {
   var activeSetupBrowser: any;
@@ -22,6 +23,15 @@ export async function POST(request: Request) {
 
     if (global.activeSetupBrowser) {
       return NextResponse.json({ success: false, error: 'Browser is already running. Please close it first.' }, { status: 400 });
+    }
+
+    // Deteksi jika berjalan di Vercel / Cloud Serverless tanpa GUI local Chrome
+    const isVercelOrCloud = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_VERSION || (!fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe') && process.platform === 'linux');
+    if (isVercelOrCloud && !process.env.BROWSER_WS_ENDPOINT) {
+      return NextResponse.json({ 
+        success: false, 
+        error: '🌐 Mode Login Setup Browser (Headful GUI) memerlukan aplikasi dijalankan secara LOCAL di komputer Anda (`npm run dev`). Server Cloud Vercel tidak memiliki layar monitor/GUI untuk menampilkan browser fisik. Silakan jalankan project di komputer lokal untuk melakukan setup login.' 
+      }, { status: 400 });
     }
 
     // Launch Google Chrome (with automatic Chromium fallback) in headful mode
