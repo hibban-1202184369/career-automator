@@ -612,15 +612,15 @@ export default function Page() {
                       {cvOptimizing ? '⚙️ Menjalankan CareerOps & Tailoring...' : '🚀 Mulai Proses CareerOps & Ekstrak'}
                     </button>
 
-                    {tailoredMarkdown && (
-                      <button
-                        type="button"
-                        onClick={downloadCvPdf}
-                        className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 font-semibold text-xs transition border border-teal-500/30 flex items-center gap-2"
-                      >
-                        📥 Download ATS CV (PDF)
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={downloadCvPdf}
+                      disabled={!tailoredMarkdown}
+                      title={!tailoredMarkdown ? 'Upload & optimize CV dulu untuk mengaktifkan download' : 'Download CV ATS hasil optimasi (PDF)'}
+                      className={`px-5 py-3 rounded-xl font-semibold text-xs transition border flex items-center gap-2 ${tailoredMarkdown ? 'bg-slate-800 hover:bg-slate-700 text-teal-300 border-teal-500/30' : 'bg-slate-800/50 text-slate-500 border-slate-700/50 cursor-not-allowed opacity-60'}`}
+                    >
+                      📥 Download ATS CV (PDF)
+                    </button>
                   </div>
                 </div>
 
@@ -994,12 +994,10 @@ export default function Page() {
                   ) : tailoringSummary ? (
                     <div className="space-y-3">
                       <p className="text-slate-300 whitespace-pre-wrap">{tailoringSummary}</p>
-                      {tailoredMarkdown && (
-                        <div className="pt-3 border-t border-slate-800 flex flex-wrap gap-3">
-                          <button type="button" onClick={downloadCvPdf} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-md flex items-center gap-2">📥 Download CV ATS (PDF)</button>
-                          <button type="button" onClick={() => { const blob = new Blob([tailoredMarkdown], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'Optimized_ATS_CV.md'; a.click(); URL.revokeObjectURL(url); }} className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700 flex items-center gap-2">📄 Download CV ATS (Markdown)</button>
-                        </div>
-                      )}
+                      <div className="pt-3 border-t border-slate-800 flex flex-wrap gap-3">
+                        <button type="button" onClick={downloadCvPdf} disabled={!tailoredMarkdown} className={`px-4 py-2 rounded-xl font-bold text-xs transition shadow-md flex items-center gap-2 ${tailoredMarkdown ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed opacity-60'}`}>📥 Download CV ATS (PDF)</button>
+                        <button type="button" onClick={() => { if(!tailoredMarkdown) return; const blob = new Blob([tailoredMarkdown], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'Optimized_ATS_CV.md'; a.click(); URL.revokeObjectURL(url); }} disabled={!tailoredMarkdown} className={`px-4 py-2 rounded-xl font-semibold text-xs transition border flex items-center gap-2 ${tailoredMarkdown ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-800/30 text-slate-600 border-slate-800 cursor-not-allowed opacity-50'}`}>📄 Download CV ATS (Markdown)</button>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-slate-600 text-center py-8">Belum ada CV yang dioptimalkan. Upload CV ATS (PDF) di Command Center → proses CareerOps akan mengisi ringkasan di sini menggunakan Fable & Astra logic.</p>
