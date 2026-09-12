@@ -65,8 +65,12 @@ export default function Page() {
   const [sheetsResult, setSheetsResult] = useState<any>(null);
   const [geminiChecking, setGeminiChecking] = useState(false);
   const [geminiResult, setGeminiResult] = useState<any>(null);
+  const [geminiVerified, setGeminiVerified] = useState(false);
   const [cvOptimizing, setCvOptimizing] = useState(false);
   const [cvResult, setCvResult] = useState<any>(null);
+  const [selectedCvFile, setSelectedCvFile] = useState<File | null>(null);
+  const [tailoredMarkdown, setTailoredMarkdown] = useState<string>('');
+  const [tailoringSummary, setTailoringSummary] = useState<string>('');
 
 
   // Load config on mount - also restore Gemini key from localStorage cache
@@ -76,6 +80,7 @@ export default function Page() {
       const cached = typeof window !== 'undefined' ? localStorage.getItem('career_automator_gemini_key') : null;
       if (cached && !config.geminiApiKey) {
         setConfig((prev: any) => ({ ...prev, geminiApiKey: cached }));
+        try { if (localStorage.getItem('career_automator_gemini_verified') === 'true') setGeminiVerified(true); } catch {}
       }
     } catch {}
     fetch('/api/config')
@@ -230,9 +235,12 @@ export default function Page() {
     fetchAppliedHistory();
   };
 
-  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleCVUpload = async () => {
+    const file = selectedCvFile;
+    if (!file) {
+      setCvResult({ success: false, error: 'Pilih file CV ATS (PDF) terlebih dahulu.' });
+      return;
+    }
     const apiKey = ((config as any).geminiApiKey || '').trim();
     if (!apiKey) {
       setCvResult({ success: false, error: 'Isi API Key Gemini di atas terlebih dahulu.' });
@@ -282,7 +290,7 @@ export default function Page() {
       setCvResult({ success: false, error: err.message || 'Gagal mengunggah CV' });
     } finally {
       setCvOptimizing(false);
-      e.target.value = '';
+      
     }
   };
 
@@ -297,6 +305,14 @@ export default function Page() {
       });
       const data = await res.json();
       setGeminiResult(data);
+      if (data.success) {
+        setGeminiVerified(true);
+        localStorage.setItem('career_automator_gemini_verified', 'true');
+        document.cookie = `gemini_verified=true; path=/; max-age=31536000; SameSite=Lax`;
+      } else {
+        setGeminiVerified(false);
+        localStorage.removeItem('career_automator_gemini_verified');
+      }
     } catch (e: any) {
       setGeminiResult({ success: false, error: e.message });
     } finally {
@@ -340,7 +356,7 @@ export default function Page() {
                 Career Automator
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`w-2 h-2 rounded-full ${(config as any).geminiApiKey?.trim() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                <span className={`w-2 h-2 rounded-full ${geminiVerified ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
                 <span className={`text-[11px] font-medium tracking-wide ${(config as any).geminiApiKey?.trim() ? 'text-emerald-400' : 'text-amber-400'}`}>{(config as any).geminiApiKey?.trim() ? 'AI Auto-Answer Active' : 'Setup Required'}</span>
               </div>
             </div>
@@ -494,7 +510,7 @@ export default function Page() {
                 <input
                   type="password"
                   value={(config as any).geminiApiKey || ''}
-                  onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value } as any)}
+                  onChange={(e) => { setConfig({ ...config, geminiApiKey: e.target.value } as any); setGeminiVerified(false); localStorage.removeItem('career_automator_gemini_verified'); }}
                   onBlur={() => { if ((config as any).geminiApiKey?.trim()) handleSaveConfig(); }}
                   className="w-full bg-[#070913] border border-indigo-500/40 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-400 font-mono text-xs"
                   placeholder="AIzaSy... tempel API key Anda di sini"
@@ -516,26 +532,52 @@ export default function Page() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                  <div className="flex-1 w-full">
+                <div className="space-y-4">
+                  <div>
                     <label className="block text-xs font-semibold text-slate-200 mb-2">File CV ATS (PDF)</label>
                     <input
                       type="file"
                       accept=".pdf"
-                      onChange={handleCVUpload}
+                      onChange={(e) => setSelectedCvFile(e.target.files?.[0] || null)}
                       disabled={!((config as any).geminiApiKey || '').trim() || cvOptimizing}
                       className="w-full text-xs text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-teal-600 file:text-white hover:file:bg-teal-500 file:transition bg-[#070913] border border-teal-500/30 rounded-xl p-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
+                    {selectedCvFile && (
+                      <p className="text-xs text-teal-300 mt-1 font-mono">📎 File dipilih: {selectedCvFile.name}</p>
+                    )}
                     {!((config as any).geminiApiKey || '').trim() && (
-                      <p className="text-[11px] text-amber-400 mt-2">⚠️ Isi API Key Gemini di atas terlebih dahulu untuk membuka fitur upload CV.</p>
+                      <p className="text-[11px] text-amber-400 mt-2">⚠️ Isi & test API Key Gemini di atas terlebih dahulu untuk membuka fitur upload CV.</p>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('cv-file-input')?.click()}
-                    disabled
-                    className="hidden"
-                  >Hidden</button>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCVUpload}
+                      disabled={!selectedCvFile || cvOptimizing || !((config as any).geminiApiKey || '').trim()}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-teal-600/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {cvOptimizing ? '⚙️ Menjalankan CareerOps & Tailoring...' : '🚀 Mulai Proses CareerOps & Ekstrak'}
+                    </button>
+
+                    {tailoredMarkdown && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const blob = new Blob([tailoredMarkdown], { type: 'text/markdown;charset=utf-8' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'Optimized_ATS_CV.md';
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 font-semibold text-xs transition border border-teal-500/30 flex items-center gap-2"
+                      >
+                        📥 Download ATS CV (.md)
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {cvOptimizing && (
@@ -815,14 +857,24 @@ export default function Page() {
               <div className="p-6 rounded-2xl bg-[#070913] border border-slate-800 space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <h4 className="text-xs font-bold tracking-widest uppercase text-slate-400">📊 Google Sheets & Credentials Database</h4>
-                  <button
-                    type="button"
-                    onClick={handleTestSheets}
-                    disabled={sheetsChecking}
-                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700"
-                  >
-                    {sheetsChecking ? 'Memeriksa...' : 'Test Koneksi Google Sheets 🔍'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveConfig}
+                      disabled={savingConfig}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center gap-2"
+                    >
+                      {savingConfig ? 'Menyimpan...' : '💾 Simpan'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTestSheets}
+                      disabled={sheetsChecking}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700"
+                    >
+                      {sheetsChecking ? 'Memeriksa...' : 'Test Koneksi 🔍'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -879,6 +931,36 @@ export default function Page() {
           {/* 3. AI INTELLIGENCE & FABLE 5.1 / GPT ASTRA HUB */}
           {activeNav === 'profile' && (
             <form onSubmit={handleSaveConfig} className="space-y-8">
+              {tailoringSummary && (
+                <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-purple-950/60 border border-indigo-500/30 space-y-4 shadow-xl">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>✨</span>
+                    <span>Hasil CareerOps CV Tailoring & AI Summary</span>
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed font-mono bg-[#070913] p-4 rounded-xl border border-indigo-500/20">
+                    {tailoringSummary}
+                  </p>
+                  {tailoredMarkdown && (
+                    <div className="flex items-center gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const blob = new Blob([tailoredMarkdown], { type: 'text/markdown;charset=utf-8' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'Optimized_ATS_CV.md';
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-md flex items-center gap-2"
+                      >
+                        📥 Download Tailored ATS CV (.md)
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">

@@ -4,6 +4,7 @@ import { runGlintsBot } from './bots/glints';
 import { runJobstreetBot } from './bots/jobstreet';
 import { runLinkedinBot } from './bots/linkedin';
 import { runIndeedBot } from './bots/indeed';
+import { ScraplingAdaptiveFetcher, getScraplingHeaders } from './scraplingHelper';
 
 
 // Helper: inject session cookies dari config (auto-login anti-keban)
@@ -166,12 +167,18 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
     const initialPages = await browser.pages();
     let initialPageUsed = false;
 
+    const fetcher = new ScraplingAdaptiveFetcher();
     const getOrNewPage = async () => {
+      let p: any;
       if (!initialPageUsed && initialPages.length > 0 && initialPages[0]) {
         initialPageUsed = true;
-        return initialPages[0];
+        p = initialPages[0];
+      } else {
+        p = await browser.newPage();
       }
-      return await browser.newPage();
+      try { await fetcher.stealthPageSetup(p); } catch {}
+      try { await p.setExtraHTTPHeaders(getScraplingHeaders()); } catch {}
+      return p;
     };
 
     const tasks: Promise<void>[] = [];

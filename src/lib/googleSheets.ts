@@ -217,3 +217,19 @@ export async function testSheetsConnection(): Promise<{ success: boolean; messag
     };
   }
 }
+
+export async function appendRowToSheet(values: string[]) {
+  try {
+    const config = getConfig();
+    if (!config.googleCredentialsJson || !config.spreadsheetId) return;
+    const sheets = getSheetsClient();
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: config.spreadsheetId,
+      range: `${config.sheetName || 'Sheet1'}!A:D`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [values] }
+    });
+  } catch (e) {
+    console.warn('Failed to append row to sheet:', e);
+  }
+}

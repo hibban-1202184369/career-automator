@@ -23,6 +23,8 @@ import fs, { readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getConfig } from "./config";
+import { callGeminiWithFallback, SYSTEM_FABLE_ASTRA_PROMPT } from "./geminiHelper";
+import { getScraplingHeaders, ScraplingAdaptiveFetcher } from "./scraplingHelper";
 
 // ---------------------------------------------------------------------------
 // 1. YOUR PROFILE — edit these to match your actual situation
@@ -984,4 +986,38 @@ export async function answerQuestion(
 // Only run main if executed directly
 if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
   main().catch(console.error);
+}
+// ---------------------------------------------------------------------------
+// Adaptive Question Storage - auto-expand Screening Questions Database
+// ---------------------------------------------------------------------------
+export async function adaptiveAddQuestion(questionText: string, answer: string, type: string = 'radiobutton') {
+  try {
+    const questionsPath = path.join(process.cwd(), 'data', 'screening-questions.json');
+    let existing: any[] = [];
+    try {
+      if (fs.existsSync(questionsPath)) {
+        existing = JSON.parse(readFileSync(questionsPath, 'utf-8'));
+      }
+    } catch {}
+    const exists = existing.some((q: any) => (q.question || q.text || '').toLowerCase().trim() === questionText.toLowerCase().trim());
+    if (!exists && questionText.trim().length > 5) {
+      existing.push({
+        question: questionText,
+        answer,
+        type,
+        source: 'adaptive-bot',
+        addedAt: new Date().toISOString(),
+      });
+      fs.mkdirSync(path.dirname(questionsPath), { recursive: true });
+      writeFileSync(questionsPath, JSON.stringify(existing, null, 2));
+      console.log(`[Adaptive DB] New question added: ${questionText.slice(0, 60)}...`);
+    }
+    // Try to append to Google Sheets as well (non-blocking)
+    try {
+      const { appendRowToSheet } = await import('./googleSheets');
+      await appendRowToSheet([new Date().toISOString(), questionText, answer, type]);
+    } catch {}
+  } catch (e) {
+    console.warn('[Adaptive DB] Failed to add question:', e);
+  }
 }
