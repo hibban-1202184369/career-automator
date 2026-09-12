@@ -315,6 +315,9 @@ export default function Page() {
         return;
       }
       const d = data.data;
+      // Store tailored CV & summary for Candidate Profile display + downloads (Fable & Astra)
+      if (d.tailoredMarkdownCv) setTailoredMarkdown(d.tailoredMarkdownCv);
+      if (d.tailoringSummary) setTailoringSummary(d.tailoringSummary);
       // Auto-fill Candidate Profile
       setConfig((prev: any) => ({
         ...prev,
@@ -441,7 +444,7 @@ export default function Page() {
         <div className="p-4 m-4 rounded-xl bg-[#0f172a] border border-[#232d59] text-xs space-y-2">
           <div className="flex justify-between items-center text-slate-400">
             <span>AI Engine</span>
-            <span className={`font-mono ${(config as any).geminiApiKey?.trim() ? 'text-emerald-400' : 'text-amber-400'}`}>{(config as any).geminiApiKey?.trim() ? 'Gemini Ready' : 'Not Set'}</span>
+            <span className={`font-mono ${geminiVerified ? 'text-emerald-400' : 'text-amber-400'}`}>{geminiVerified ? 'Gemini Ready' : 'Not Set'}</span>
           </div>
           <div className="flex justify-between items-center text-slate-400">
             <span>Answer Engine</span>
@@ -972,28 +975,42 @@ export default function Page() {
           {/* 3. AI INTELLIGENCE & FABLE 5.1 / GPT ASTRA HUB */}
           {activeNav === 'profile' && (
             <form onSubmit={handleSaveConfig} className="space-y-8">
-              {tailoringSummary && (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-purple-950/60 border border-indigo-500/30 space-y-4 shadow-xl">
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              {/* CV CareerOps Intelligence Summary — always visible like Live Console Log */}
+              <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <span>✨</span>
-                    <span>Hasil CareerOps CV Tailoring & AI Summary</span>
-                  </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed font-mono bg-[#070913] p-4 rounded-xl border border-indigo-500/20">
-                    {tailoringSummary}
-                  </p>
-                  {tailoredMarkdown && (
-                    <div className="flex items-center gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={downloadCvPdf}
-                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-md flex items-center gap-2"
-                      >
-                        📥 Download Tailored ATS CV (PDF)
-                      </button>
+                    <span>CV CareerOps Intelligence Summary</span>
+                  </h3>
+                  <span className={`text-xs px-3 py-1 rounded-full border font-mono ${tailoringSummary ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'}`}>
+                    {tailoringSummary ? 'Tailored ✓' : 'Menunggu CV'}
+                  </span>
+                </div>
+                <div className="p-6 rounded-xl bg-[#070913] border border-slate-800 font-mono text-xs leading-relaxed min-h-[180px] overflow-y-auto shadow-inner">
+                  {cvOptimizing ? (
+                    <div className="flex items-center gap-2 text-teal-300">
+                      <span className="animate-spin">⚙️</span> Menganalisis & mengoptimalkan CV dengan Fable 5.1 & Astra Logic...
                     </div>
+                  ) : tailoringSummary ? (
+                    <div className="space-y-3">
+                      <p className="text-slate-300 whitespace-pre-wrap">{tailoringSummary}</p>
+                      {tailoredMarkdown && (
+                        <div className="pt-3 border-t border-slate-800 flex flex-wrap gap-3">
+                          <button type="button" onClick={downloadCvPdf} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-md flex items-center gap-2">📥 Download CV ATS (PDF)</button>
+                          <button type="button" onClick={() => { const blob = new Blob([tailoredMarkdown], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'Optimized_ATS_CV.md'; a.click(); URL.revokeObjectURL(url); }} className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700 flex items-center gap-2">📄 Download CV ATS (Markdown)</button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-slate-600 text-center py-8">Belum ada CV yang dioptimalkan. Upload CV ATS (PDF) di Command Center → proses CareerOps akan mengisi ringkasan di sini menggunakan Fable & Astra logic.</p>
                   )}
                 </div>
-              )}
+                {cvResult && (
+                  <div className={`text-xs p-3 rounded-xl border ${cvResult.success ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'}`}>
+                    {cvResult.success ? `✅ ${cvResult.message}` : `❌ ${cvResult.error}`}
+                  </div>
+                )}
+              </div>
               <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">

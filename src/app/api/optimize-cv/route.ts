@@ -38,12 +38,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Teks CV terlalu pendek atau kosong.' }, { status: 400 });
     }
 
-    // STEP 1: Career Ops Tailoring & ATS Optimization
+    // STEP 1: Career Ops Tailoring & ATS Optimization (Fable 5.1 & Astra Logic — wajib, anti-halu, pro ATS)
     const tailoringPrompt = `
-Lakukan proses Career Ops Tailoring & ATS Optimization pada teks CV berikut.
-Pastikan tata bahasa profesional, menekankan nilai value-proposition (sertifikasi, pengalaman kepemimpinan, teknis), dan hapus elemen yang berlebihan.
+TUGAS: CareerOps Tailoring & ATS Optimization menggunakan [Fable 5.1 & GPT Astra Logic] — surgical precision, zero-fluff, bias-to-action, anti-halu. CV berformat PDF telah di-parse ke teks (pdf-parse). Optimasi harus profesional, ATS-friendly, menekankan value-proposition (sertifikasi Cisco/MTCNA/ISO, kepemimpinan, GRC/Cybersecurity/NIST, IT Audit), hapus filler.
 
-Teks CV Asli:
+Teks CV Asli (hasil pdf-parse):
 ---
 ${cvText.slice(0, 15000)}
 ---
