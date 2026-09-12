@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Page() {
-  const [activeNav, setActiveNav] = useState<'dashboard' | 'bot' | 'profile' | 'sheets' | 'questions' | 'logs' | 'history'>('dashboard');
+  const [activeNav, setActiveNav] = useState<'dashboard' | 'bot' | 'profile' | 'questions' | 'logs' | 'history'>('dashboard');
 
   // Config State
   const [config, setConfig] = useState({
@@ -275,7 +275,6 @@ export default function Page() {
               { id: 'dashboard', label: 'Command Center', icon: '⚡' },
               { id: 'bot', label: 'Bot Engine Setup', icon: '⚙️' },
               { id: 'profile', label: 'Candidate Profile', icon: '👤' },
-              { id: 'sheets', label: 'Google Sheets DB', icon: '📊' },
               { id: 'questions', label: 'Screening Q&A', icon: '📋' },
               { id: 'logs', label: 'Live Console Logs', icon: '📟' },
               { id: 'history', label: 'Application Audit', icon: '📈' },
@@ -322,9 +321,8 @@ export default function Page() {
             <div>
               <h2 className="text-lg font-bold capitalize tracking-tight text-white flex items-center gap-2">
                 {activeNav === 'dashboard' && 'Command Center Overview'}
-                {activeNav === 'bot' && 'Bot Engine Automation Settings'}
+                {activeNav === 'bot' && 'Bot Engine & Database Configuration'}
                 {activeNav === 'profile' && 'Candidate Professional Profile'}
-                {activeNav === 'sheets' && 'Google Sheets & Credentials Database'}
                 {activeNav === 'questions' && 'Screening Questions Intelligence Base'}
                 {activeNav === 'logs' && 'Live Terminal Execution Logs'}
                 {activeNav === 'history' && 'Application Audit & History Log'}
@@ -617,6 +615,103 @@ export default function Page() {
                   <span className="text-slate-300">Mode Debug Test (dry-run tanpa submit lamaran)</span>
                 </label>
               </div>
+
+              {/* Google Sheets & Credentials & Remote Browser Integration */}
+              <div className="p-6 rounded-2xl bg-[#070913] border border-slate-800 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <h4 className="text-xs font-bold tracking-widest uppercase text-slate-400">📊 Google Sheets & Credentials Database</h4>
+                  <button
+                    type="button"
+                    onClick={handleTestSheets}
+                    disabled={sheetsChecking}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700"
+                  >
+                    {sheetsChecking ? 'Memeriksa...' : 'Test Koneksi Google Sheets 🔍'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-2">Google Spreadsheet ID</label>
+                    <input
+                      type="text"
+                      value={config.spreadsheetId}
+                      onChange={(e) => setConfig({ ...config, spreadsheetId: e.target.value })}
+                      className="w-full bg-[#0b1021] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-2">Sheet Name (Nama Lembar)</label>
+                    <input
+                      type="text"
+                      value={config.sheetName}
+                      onChange={(e) => setConfig({ ...config, sheetName: e.target.value })}
+                      className="w-full bg-[#0b1021] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      placeholder="Sheet1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-2">Google Service Account JSON Credentials</label>
+                  <textarea
+                    rows={4}
+                    value={config.googleCredentialsJson}
+                    onChange={(e) => setConfig({ ...config, googleCredentialsJson: e.target.value })}
+                    className="w-full bg-[#0b1021] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                    placeholder="{ ... }"
+                  ></textarea>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800">
+                  <label className="block text-xs font-semibold text-slate-300 mb-2">Remote Browser WebSocket Endpoint (Opsional: Koyeb / VPS Camoufox / Browserless WS)</label>
+                  <input
+                    type="text"
+                    value={(config as any).browserWsEndpoint || ''}
+                    onChange={(e) => setConfig({ ...config, browserWsEndpoint: e.target.value } as any)}
+                    className="w-full bg-[#0b1021] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                    placeholder="ws://your-vps-ip:7860 or wss://browserless.example.com"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    Kosongkan untuk menggunakan Chrome lokal. Isi URL WebSocket jika menjalankan remote browser tanpa kartu di VPS/Koyeb.
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800">
+                  <label className="block text-xs font-semibold text-slate-300 mb-2">Gemini API Key (Auto-Jawab Screening - Fable & Astra Logic)</label>
+                  <input
+                    type="password"
+                    value={(config as any).geminiApiKey || ''}
+                    onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value } as any)}
+                    className="w-full bg-[#0b1021] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                    placeholder="AIzaSy... (kosongkan jika pakai ENV)"
+                  />
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleTestGemini}
+                      disabled={geminiChecking}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 border border-indigo-500/30"
+                    >
+                      {geminiChecking ? 'Menguji...' : 'Test Koneksi Gemini 🔑'}
+                    </button>
+                    {geminiResult && (
+                      <span className={`text-xs font-mono ${geminiResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {geminiResult.success ? '✅ Koneksi Berhasil!' : `❌ ${geminiResult.error}` }
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {sheetsResult && (
+                  <div className="pt-2">
+                    <span className={`text-xs font-mono ${sheetsResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {sheetsResult.success ? '✅ Google Sheets Berhasil Terhubung!' : `❌ ${sheetsResult.error}`}
+                    </span>
+                  </div>
+                )}
+              </div>
               </div>
             </form>
           )}
@@ -760,115 +855,7 @@ export default function Page() {
             </form>
           )}
 
-          {/* 5. GOOGLE SHEETS DB VIEW */}
-          {activeNav === 'sheets' && (
-            <form onSubmit={handleSaveConfig} className="space-y-8">
-              <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <span>📊</span>
-                    <span>Google Sheets & Service Account Database Sync</span>
-                  </h3>
-                  <button
-                    type="submit"
-                    disabled={savingConfig}
-                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30"
-                  >
-                    {savingConfig ? 'Menyimpan...' : 'Simpan Sheets Config'}
-                  </button>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">Google Spreadsheet ID</label>
-                    <input
-                      type="text"
-                      value={config.spreadsheetId}
-                      onChange={(e) => setConfig({ ...config, spreadsheetId: e.target.value })}
-                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
-                      placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">Sheet Name (Nama Lembar)</label>
-                    <input
-                      type="text"
-                      value={config.sheetName}
-                      onChange={(e) => setConfig({ ...config, sheetName: e.target.value })}
-                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
-                      placeholder="Sheet1"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Google Service Account JSON Credentials</label>
-                  <textarea
-                    rows={5}
-                    value={config.googleCredentialsJson}
-                    onChange={(e) => setConfig({ ...config, googleCredentialsJson: e.target.value })}
-                    className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
-                    placeholder="{ ... }"
-                  ></textarea>
-                <div className="mt-6 pt-6 border-t border-slate-800">
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Remote Browser WebSocket Endpoint (Opsional: Koyeb / VPS Camoufox / Browserless WS)</label>
-                  <input
-                    type="text"
-                    value={(config as any).browserWsEndpoint || ''}
-                    onChange={(e) => setConfig({ ...config, browserWsEndpoint: e.target.value } as any)}
-                    className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
-                    placeholder="ws://your-vps-ip:7860 or wss://browserless.example.com"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1.5">
-                    Kosongkan untuk menggunakan Chrome/Chromium lokal. Isi URL WebSocket jika Anda menjalankan remote browser tanpa kartu di VPS/Koyeb.
-                  </p>
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-slate-800">
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Gemini API Key (Auto-Jawab Screening - Fable & Astra Logic)</label>
-                  <input
-                    type="password"
-                    value={(config as any).geminiApiKey || ''}
-                    onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value } as any)}
-                    className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
-                    placeholder="AIzaSy... (kosongkan jika pakai ENV)"
-                  />
-                  <div className="mt-3 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleTestGemini}
-                      disabled={geminiChecking}
-                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 border border-indigo-500/30"
-                    >
-                      {geminiChecking ? 'Menguji...' : 'Test Koneksi Gemini 🔑'}
-                    </button>
-                    {geminiResult && (
-                      <span className={`text-xs font-mono ${geminiResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {geminiResult.success ? '✅ Koneksi Berhasil!' : `❌ ${geminiResult.error}` }
-                      </span>
-                    )}
-                  </div>
-                </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={handleTestSheets}
-                    disabled={sheetsChecking}
-                    className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700"
-                  >
-                    {sheetsChecking ? 'Memeriksa...' : 'Test Koneksi Google Sheets 🔍'}
-                  </button>
-                  {sheetsResult && (
-                    <span className={`text-xs font-mono ${sheetsResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {sheetsResult.success ? '✅ Koneksi Berhasil!' : `❌ ${sheetsResult.error}`}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </form>
-          )}
 
           {/* 6. SCREENING QUESTIONS Q&A VIEW */}
           {activeNav === 'questions' && (
