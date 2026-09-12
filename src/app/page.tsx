@@ -63,6 +63,8 @@ export default function Page() {
   const [historyItems, setHistoryItems] = useState<any[]>([]);
   const [sheetsChecking, setSheetsChecking] = useState(false);
   const [sheetsResult, setSheetsResult] = useState<any>(null);
+  const [geminiChecking, setGeminiChecking] = useState(false);
+  const [geminiResult, setGeminiResult] = useState<any>(null);
 
 
   // Load config on mount
@@ -203,6 +205,24 @@ export default function Page() {
       console.error(e);
     }
     fetchAppliedHistory();
+  };
+
+  const handleTestGemini = async () => {
+    setGeminiChecking(true);
+    setGeminiResult(null);
+    try {
+      const res = await fetch('/api/test-gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ geminiApiKey: (config as any).geminiApiKey }),
+      });
+      const data = await res.json();
+      setGeminiResult(data);
+    } catch (e: any) {
+      setGeminiResult({ success: false, error: e.message });
+    } finally {
+      setGeminiChecking(false);
+    }
   };
 
   const handleTestSheets = async () => {
@@ -797,7 +817,21 @@ export default function Page() {
                     className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
                     placeholder="AIzaSy... (kosongkan jika pakai ENV)"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Cukup isi sekali di tab ini. Teman Anda langsung pakai tanpa perlu setting gateway apa pun.</p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleTestGemini}
+                      disabled={geminiChecking}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 border border-indigo-500/30"
+                    >
+                      {geminiChecking ? 'Menguji...' : 'Test Koneksi Gemini 🔑'}
+                    </button>
+                    {geminiResult && (
+                      <span className={`text-xs font-mono ${geminiResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {geminiResult.success ? '✅ Koneksi Berhasil!' : `❌ ${geminiResult.error}` }
+                      </span>
+                    )}
+                  </div>
                 </div>
                 </div>
 
