@@ -588,13 +588,13 @@ export default function Page() {
                       type="file"
                       accept=".pdf"
                       onChange={(e) => setSelectedCvFile(e.target.files?.[0] || null)}
-                      disabled={!((config as any).geminiApiKey || '').trim() || cvOptimizing}
+                      disabled={!geminiVerified || cvOptimizing}
                       className="w-full text-xs text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-teal-600 file:text-white hover:file:bg-teal-500 file:transition bg-[#070913] border border-teal-500/30 rounded-xl p-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     {selectedCvFile && (
                       <p className="text-xs text-teal-300 mt-1 font-mono">📎 File dipilih: {selectedCvFile.name}</p>
                     )}
-                    {!((config as any).geminiApiKey || '').trim() && (
+                    {!geminiVerified && (
                       <p className="text-[11px] text-amber-400 mt-2">⚠️ Isi & test API Key Gemini di atas terlebih dahulu untuk membuka fitur upload CV.</p>
                     )}
                   </div>
@@ -603,7 +603,7 @@ export default function Page() {
                     <button
                       type="button"
                       onClick={handleCVUpload}
-                      disabled={!selectedCvFile || cvOptimizing || !((config as any).geminiApiKey || '').trim()}
+                      disabled={!selectedCvFile || cvOptimizing || !geminiVerified}
                       className="px-6 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-teal-600/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {cvOptimizing ? '⚙️ Menjalankan CareerOps & Tailoring...' : '🚀 Mulai Proses CareerOps & Ekstrak'}
