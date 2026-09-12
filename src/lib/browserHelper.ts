@@ -8,17 +8,42 @@ export interface LaunchBrowserResult {
 }
 
 /**
+ * Automatically detects installed Google Chrome executable path across OS platforms.
+ */
+function getSystemChromePath(): string | null {
+  if (process.platform === 'win32') {
+    const candidates = [
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+      path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Google\\Chrome\\Application\\chrome.exe')
+    ];
+    for (const c of candidates) {
+      if (c && fs.existsSync(/*turbopackIgnore: true*/ c)) return c;
+    }
+  } else if (process.platform === 'darwin') {
+    const macPath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    if (fs.existsSync(/*turbopackIgnore: true*/ macPath)) return macPath;
+  } else {
+    const linuxPaths = ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
+    for (const p of linuxPaths) {
+      if (fs.existsSync(/*turbopackIgnore: true*/ p)) return p;
+    }
+  }
+  return null;
+}
+
+/**
  * Removes stale Chromium/Chrome singleton lock symlinks if left over from a previous crash/close.
- * This prevents the "Failed to launch: Opening in existing browser session" error.
  */
 export function cleanupStaleProfileLocks(profilePath: string) {
   try {
     const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'DevToolsActivePort'];
     for (const file of lockFiles) {
-      const fullPath = path.join(process.cwd(), 'automation-profile', file);
+      const fullPath = path.join(/*turbopackIgnore: true*/ profilePath, file);
       try {
-        if (fs.existsSync(fullPath) || fs.lstatSync(fullPath).isSymbolicLink()) {
-          fs.unlinkSync(fullPath);
+        if (fs.existsSync(/*turbopackIgnore: true*/ fullPath) || (fs.lstatSync(/*turbopackIgnore: true*/ fullPath).isSymbolicLink())) {
+          fs.unlinkSync(/*turbopackIgnore: true*/ fullPath);
         }
       } catch {}
     }
@@ -30,7 +55,6 @@ export function cleanupStaleProfileLocks(profilePath: string) {
 /**
  * Launches Puppeteer browser with priority given to official Google Chrome (System Chrome)
  * and automatically falls back to bundled Chromium if Google Chrome fails or is unavailable.
- * Both use the exact same persistent profile path (`automation-profile/`).
  */
 export async function launchBrowserWithFallback(
   mode: 'headless' | 'headful' = 'headless',
@@ -43,10 +67,9 @@ export async function launchBrowserWithFallback(
   } catch (e) {}
 
   const config = getConfig();
-  const profilePath = path.join(process.cwd(), 'automation-profile');
+  const profilePath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'automation-profile');
   const isHeadless = mode !== 'headful';
 
-  // Bersihkan stale singleton lock sebelum meluncurkan browser
   cleanupStaleProfileLocks(profilePath);
 
   const baseArgs = [
@@ -58,7 +81,6 @@ export async function launchBrowserWithFallback(
     '--window-size=1280,800'
   ];
 
-  // Hanya tambahkan sandbox flags khusus Linux jika dijalankan di container/server Linux
   if (process.platform === 'linux') {
     baseArgs.push('--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage');
   }
@@ -74,50 +96,38 @@ export async function launchBrowserWithFallback(
   const log = onLog || console.log;
 
   // ----------------------------------------------------
-  // ATTEMPT 0: Remote WebSocket (Camoufox / Browserless / VPS)
+  // ATTEMPT 1: System Google Chrome (Auto-detected or Custom Path)
   // ----------------------------------------------------
-  if (config.browserWsEndpoint && config.browserWsEndpoint.trim().length > 0) {
-    const wsEndpoint = config.browserWsEndpoint.trim();
-    try {
-      log(`🌐 Menghubungkan ke Remote Browser WebSocket (${wsEndpoint})...`);
-      const browser = await puppeteer.connect({ browserWSEndpoint: wsEndpoint });
-      const version = await browser.version().catch(() => 'Unknown');
-      log(`✅ Berhasil terhubung ke Remote Browser [${version}]`);
-      return {
-        browser,
-        browserType: 'google-chrome' // generic fallback type
-      };
-    } catch (wsError: any) {
-      log(`⚠️ Gagal terhubung ke Remote Browser WebSocket: ${wsError.message || wsError}`);
-      log(`🔄 Beralih mencoba Local Chrome / Chromium...`);
-    }
-  }
   if (config.useSystemChrome !== false) {
     const customPath = config.customChromePath ? config.customChromePath.trim() : '';
-    const isCustomPath = customPath.length > 0;
-    const chromeOptions = {
-      ...baseOptions,
-      ...(isCustomPath ? { executablePath: customPath } : { channel: 'chrome' })
-    };
+    const detectedPath = getSystemChromePath();
+    const executablePath = customPath || detectedPath;
 
-    const targetLabel = isCustomPath
-      ? `Google Chrome (${customPath})`
-      : 'Google Chrome Resmi (System Chrome)';
-
-    try {
-      log(`🌐 Mencoba meluncurkan ${targetLabel}...`);
-      cleanupStaleProfileLocks(profilePath);
-      const browser = await puppeteer.launch(chromeOptions);
-      const version = await browser.version().catch(() => 'Unknown');
-      log(`✅ Berhasil membuka ${targetLabel} [${version}]`);
-      return {
-        browser,
-        browserType: isCustomPath ? 'custom-chrome' : 'google-chrome'
+    if (executablePath && fs.existsSync(/*turbopackIgnore: true*/ executablePath)) {
+      const chromeOptions = {
+        ...baseOptions,
+        executablePath
       };
-    } catch (chromeError: any) {
-      log(`⚠️ Gagal membuka ${targetLabel}: ${chromeError.message || chromeError}`);
-      log(`🔄 Beralih (fallback) menggunakan Chromium bawaan Puppeteer...`);
-      cleanupStaleProfileLocks(profilePath);
+
+      const targetLabel = customPath ? `Custom Chrome (${customPath})` : `System Google Chrome (${executablePath})`;
+
+      try {
+        log(`🌐 Mencoba meluncurkan ${targetLabel}...`);
+        cleanupStaleProfileLocks(profilePath);
+        const browser = await puppeteer.launch(chromeOptions);
+        const version = await browser.version().catch(() => 'Unknown');
+        log(`✅ Berhasil membuka ${targetLabel} [${version}]`);
+        return {
+          browser,
+          browserType: customPath ? 'custom-chrome' : 'google-chrome'
+        };
+      } catch (chromeError: any) {
+        log(`⚠️ Gagal membuka ${targetLabel}: ${chromeError.message || chromeError}`);
+        log(`🔄 Beralih (fallback) menggunakan Chromium bawaan Puppeteer...`);
+        cleanupStaleProfileLocks(profilePath);
+      }
+    } else {
+      log(`⚠️ System Google Chrome tidak ditemukan di path default. Mencoba Chromium bawaan...`);
     }
   }
 
@@ -136,6 +146,6 @@ export async function launchBrowserWithFallback(
     };
   } catch (bundledError: any) {
     log(`🚨 Gagal meluncurkan browser: ${bundledError.message || bundledError}`);
-    throw new Error(`Tidak dapat meluncurkan browser: ${bundledError.message || bundledError}`);
+    throw new Error(`Tidak dapat meluncurkan browser: ${bundledError.message || bundledError}. Silakan pastikan Google Chrome terinstal di komputer Anda.`);
   }
 }
