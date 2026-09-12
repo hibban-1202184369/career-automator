@@ -1,5 +1,4 @@
 'use client';
-import { jsPDF } from 'jspdf';
 
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -237,10 +236,11 @@ export default function Page() {
   };
 
 
-  const downloadCvPdf = () => {
+  const downloadCvPdf = async () => {
     const markdown = tailoredMarkdown;
     const summary = tailoringSummary;
     try {
+      const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ unit: "mm", format: "a4" });
       const margin = 15;
       let y = 15;
