@@ -158,6 +158,13 @@ export async function runJobstreetBot(
           });
 
           onLog(`[Worker ${workerId + 1}] 💼 Job: "${jobDetails.title}" at "${jobDetails.company}"`);
+          {
+            const __ex = (config as any).__isExcluded?.(jobDetails.title, jobDetails.company);
+            if (__ex) {
+              onLog(`[Worker ${workerId + 1}] 🚫 Melewati "${jobDetails.title}" - Terfilter kata kunci pengecualian: "${__ex}".`);
+              continue;
+            }
+          }
 
           // Find Apply button and verify status on Jobstreet
           const applyBtnStatus = await workerPage.evaluate(() => {

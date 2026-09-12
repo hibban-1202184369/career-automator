@@ -64,6 +64,21 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
       onLog(`🎯 Mode Kuota: Kuota Per-Platform Aktif (Glints: ${config.limitGlints || 80}, JobStreet: ${config.limitJobstreet || 75}, LinkedIn: ${config.limitLinkedin || 50}).`);
     }
 
+    const excludeList = (config.excludeKeywords || '').split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean);
+    const isExcluded = (title: string, company: string) => {
+      if (excludeList.length === 0) return null;
+      const hay = `${title} ${company}`.toLowerCase();
+      for (const ex of excludeList) {
+        // Support multi-word phrase match
+        if (ex && hay.includes(ex)) return ex;
+      }
+      return null;
+    };
+    (config as any).__isExcluded = isExcluded;
+    if (excludeList.length > 0) {
+      onLog(`🚫 Filter Pengecualian Aktif: ${excludeList.join(', ')} (cek judul + perusahaan, cth: Bank/Riba dilewati).`);
+    }
+
     const glintsLimiter = {
       getTargetLimit: () => isSharedMode ? sharedLimitTarget : (config.limitGlints || config.limitPerDay || 80),
       isLimitReached: (currentGlintsSuccess: number) => {
@@ -243,7 +258,7 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
     onLog(`⏩ Total Dilewati (Sudah Dilamar): ${totalAlreadyApplied} pekerjaan`);
     onLog(`❌ Total Error: ${totalErrors} pekerjaan`);
     onLog('--------------------------------------------------');
-    onLog('🏁 Sesi CV Blaster Selesai!');
+    onLog('🏁 Sesi Career Automator Selesai!');
   } catch (error: any) {
     onLog(`🚨 Fatal Bot Error: ${error.message || error}`);
   } finally {

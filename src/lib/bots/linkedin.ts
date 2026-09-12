@@ -181,6 +181,15 @@ export async function runLinkedinBot(
         onLog(`🏢 Perusahaan: "${cardInfo.company}" | 📍 ${cardInfo.location || 'Indonesia'}`);
         onLog(`🔗 URL: ${cardInfo.url}`);
 
+        // Filter pengecualian (exclude keywords) - cek sebelum buka panel detail
+        {
+          const __ex = (config as any).__isExcluded?.(cardInfo.title, cardInfo.company);
+          if (__ex) {
+            onLog(`🚫 Melewati "${cardInfo.title}" - Terfilter kata kunci pengecualian: "${__ex}".`);
+            continue;
+          }
+        }
+
         // Cek label pada kartu
         if (cardInfo.isAlreadyApplied) {
           onLog(`⏩ Melewati "${cardInfo.title}" - Sudah ada label 'Applied / Dilamar' pada kartu.`);
@@ -229,6 +238,13 @@ export async function runLinkedinBot(
         }
 
         const activeTitle = rightPaneDetail.officialTitle || cardInfo.title;
+        {
+          const __ex2 = (config as any).__isExcluded?.(activeTitle, cardInfo.company);
+          if (__ex2) {
+            onLog(`🚫 Melewati "${activeTitle}" - Terfilter kata kunci pengecualian (detail): "${__ex2}".`);
+            continue;
+          }
+        }
         const activeCompany = rightPaneDetail.officialCompany || cardInfo.company;
 
         // Pengecekan apakah kartu sama persis dengan kartu sebelumnya

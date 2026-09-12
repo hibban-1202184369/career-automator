@@ -490,6 +490,17 @@ export default function Page() {
                       placeholder="Network Engineer, IT GRC, MIS, IT Auditor"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-amber-400/90 mb-2">🚫 Exclude Keywords (Pengecualian — biar tidak masuk riba/perbankan)</label>
+                    <input
+                      type="text"
+                      value={(config as any).excludeKeywords || ""}
+                      onChange={(e) => setConfig({ ...config, excludeKeywords: e.target.value } as any)}
+                      className="w-full bg-[#070913] border border-amber-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500 font-mono"
+                      placeholder="Bank, Banking, Perbankan, Bank Konvensional, Pinjaman Berbunga, Kredit Konsumtif, Leasing, Asuransi Konvensional, Riba"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1">Pisahkan dengan koma — setiap kata/frasa yang muncul di <b className="text-slate-400">judul atau nama perusahaan</b> akan otomatis <span className="text-amber-400 font-semibold">dilewati (skip)</span>. Contoh: <code className="text-slate-400">Network Engineer</code> + exclude <code className="text-amber-400">Bank, Riba</code> → lowongan di bank tidak akan dilamar.</p>
+                  </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-2">Target Location (Lokasi)</label>
                     <input

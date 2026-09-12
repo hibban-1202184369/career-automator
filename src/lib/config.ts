@@ -7,6 +7,7 @@ export interface AppConfig {
   googleCredentialsJson: string;
   geminiApiKey: string;
   searchKeywords: string;
+  excludeKeywords: string;
   location: string;
   minSalary: string;
   limitPerDay: number;
@@ -47,6 +48,7 @@ const DEFAULT_CONFIG: AppConfig = {
   googleCredentialsJson: '',
   geminiApiKey: '',
   searchKeywords: '',
+  excludeKeywords: 'Bank, Banking, Bank Konvensional, Pinjaman, Kredit, Leasing, Asuransi Konvensional, Riba',
   location: '',
   minSalary: '',
   limitPerDay: 200,
@@ -119,6 +121,7 @@ export function getConfig(): AppConfig {
     'GOOGLE_CREDENTIALS_JSON': 'googleCredentialsJson',
     'GEMINI_API_KEY': 'geminiApiKey',
     'SEARCH_KEYWORDS': 'searchKeywords',
+    'EXCLUDE_KEYWORDS': 'excludeKeywords',
     'LOCATION': 'location',
     'MIN_SALARY': 'minSalary',
     'LIMIT_PER_DAY': 'limitPerDay',

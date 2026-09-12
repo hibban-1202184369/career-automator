@@ -167,6 +167,15 @@ export async function runIndeedBot(
           continue;
         }
 
+        // Filter pengecualian (exclude keywords)
+        {
+          const __ex = (config as any).__isExcluded?.(cardInfo.title, cardInfo.company);
+          if (__ex) {
+            onLog(`🚫 [${i + 1}/${jobCards.length}] Melewati "${cardInfo.title}" - Terfilter kata kunci pengecualian: "${__ex}".`);
+            continue;
+          }
+        }
+
         onLog('==================================================');
         onLog(`💼 [${i + 1}/${jobCards.length}] Lowongan: "${cardInfo.title}"`);
         onLog(`🏢 Perusahaan: "${cardInfo.company}" | 📍 ${cardInfo.location}`);
@@ -214,6 +223,13 @@ export async function runIndeedBot(
 
         const activeTitle = detailInfo?.officialTitle || cardInfo.title;
         const activeCompany = detailInfo?.officialCompany || cardInfo.company;
+        {
+          const __ex2 = (config as any).__isExcluded?.(activeTitle, activeCompany);
+          if (__ex2) {
+            onLog(`🚫 Melewati "${activeTitle}" - Terfilter kata kunci pengecualian (detail): "${__ex2}".`);
+            continue;
+          }
+        }
 
         if (!detailInfo || !detailInfo.hasIndeedApply) {
           if (detailInfo?.isExternal) {
