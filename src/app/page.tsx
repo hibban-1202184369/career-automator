@@ -250,8 +250,8 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-[#070913] text-[#f8fafc] flex font-sans selection:bg-indigo-500 selection:text-white">
-      {/* SIDEBAR NAVIGATION */}
-      <aside className="w-72 bg-[#0b1021] border-r border-[#1e264a] flex flex-col justify-between shrink-0 hidden lg:flex">
+      {/* SIDEBAR NAVIGATION - FIXED */}
+      <aside className="w-72 bg-[#0b1021] border-r border-[#1e264a] flex flex-col justify-between shrink-0 hidden lg:flex fixed left-0 top-0 h-screen z-40 overflow-y-auto">
         <div>
           {/* Logo & Brand */}
           <div className="p-6 border-b border-[#1e264a] flex items-center gap-3">
@@ -263,8 +263,8 @@ export default function Page() {
                 Career Automator
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span className="text-[11px] text-emerald-400 font-medium tracking-wide">AI Auto-Answer Active</span>
+                <span className={`w-2 h-2 rounded-full ${(config as any).geminiApiKey?.trim() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                <span className={`text-[11px] font-medium tracking-wide ${(config as any).geminiApiKey?.trim() ? 'text-emerald-400' : 'text-amber-400'}`}>{(config as any).geminiApiKey?.trim() ? 'AI Auto-Answer Active' : 'Setup Required'}</span>
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function Page() {
         <div className="p-4 m-4 rounded-xl bg-[#0f172a] border border-[#232d59] text-xs space-y-2">
           <div className="flex justify-between items-center text-slate-400">
             <span>AI Engine</span>
-            <span className="text-emerald-400 font-mono">Gemini Ready</span>
+            <span className={`font-mono ${(config as any).geminiApiKey?.trim() ? 'text-emerald-400' : 'text-amber-400'}`}>{(config as any).geminiApiKey?.trim() ? 'Gemini Ready' : 'Not Set'}</span>
           </div>
           <div className="flex justify-between items-center text-slate-400">
             <span>Answer Engine</span>
@@ -313,7 +313,7 @@ export default function Page() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-72">
         {/* TOP COMMAND HEADER */}
         <header className="h-20 bg-[#0b1021]/80 backdrop-blur-md border-b border-[#1e264a] px-6 lg:px-10 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
@@ -458,7 +458,11 @@ export default function Page() {
                   <div className="space-y-4 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Gemini AI</span>
-                      <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">Online</span>
+                      {(config as any).geminiApiKey?.trim() ? (
+                        <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">Online</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 font-mono">Not Set</span>
+                      )}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Reasoning Mode</span>
@@ -485,6 +489,36 @@ export default function Page() {
           {/* 2. BOT ENGINE SETTINGS VIEW */}
           {activeNav === 'bot' && (
             <form onSubmit={handleSaveConfig} className="space-y-8">
+              {/* 🧠 AI BRAIN - GEMINI (OTAK UTAMA) */}
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 space-y-4 shadow-xl shadow-indigo-900/20">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold tracking-widest uppercase text-indigo-300">🧠 AI Brain — Gemini API Key (Otak Utama)</h4>
+                  <button
+                    type="button"
+                    onClick={handleTestGemini}
+                    disabled={geminiChecking}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 border border-indigo-500/30"
+                  >
+                    {geminiChecking ? 'Menguji...' : 'Test Koneksi Gemini 🔑'}
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Kunci utama sistem — digunakan untuk <span className="text-slate-200 font-semibold">scraping & analisis lowongan</span> serta <span className="text-slate-200 font-semibold">auto-jawab screening</span> (Fable & Astra Logic). Wajib diisi agar bot berjalan.
+                </p>
+                <input
+                  type="password"
+                  value={(config as any).geminiApiKey || ''}
+                  onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value } as any)}
+                  className="w-full bg-[#070913] border border-indigo-500/40 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-400 font-mono text-xs"
+                  placeholder="AIzaSy... tempel API key Anda di sini"
+                />
+                {geminiResult && (
+                  <span className={`text-xs font-mono ${(geminiResult as any).success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {(geminiResult as any).success ? '✅ Koneksi Berhasil!' : `❌ ${(geminiResult as any).error}` }
+                  </span>
+                )}
+              </div>
+
               <div className="p-8 rounded-2xl bg-[#0f172a] border border-[#232d59] shadow-xl space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -664,45 +698,9 @@ export default function Page() {
                   ></textarea>
                 </div>
 
-                <div className="pt-4 border-t border-slate-800">
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Remote Browser WebSocket Endpoint (Opsional: Koyeb / VPS Camoufox / Browserless WS)</label>
-                  <input
-                    type="text"
-                    value={(config as any).browserWsEndpoint || ''}
-                    onChange={(e) => setConfig({ ...config, browserWsEndpoint: e.target.value } as any)}
-                    className="w-full bg-[#0b1021] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
-                    placeholder="ws://your-vps-ip:7860 or wss://browserless.example.com"
-                  />
-                  <p className="text-[11px] text-slate-500 mt-1.5">
-                    Kosongkan untuk menggunakan Chrome lokal. Isi URL WebSocket jika menjalankan remote browser tanpa kartu di VPS/Koyeb.
-                  </p>
-                </div>
 
-                <div className="pt-4 border-t border-slate-800">
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Gemini API Key (Auto-Jawab Screening - Fable & Astra Logic)</label>
-                  <input
-                    type="password"
-                    value={(config as any).geminiApiKey || ''}
-                    onChange={(e) => setConfig({ ...config, geminiApiKey: e.target.value } as any)}
-                    className="w-full bg-[#0b1021] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
-                    placeholder="AIzaSy... (kosongkan jika pakai ENV)"
-                  />
-                  <div className="mt-3 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleTestGemini}
-                      disabled={geminiChecking}
-                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 border border-indigo-500/30"
-                    >
-                      {geminiChecking ? 'Menguji...' : 'Test Koneksi Gemini 🔑'}
-                    </button>
-                    {geminiResult && (
-                      <span className={`text-xs font-mono ${geminiResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {geminiResult.success ? '✅ Koneksi Berhasil!' : `❌ ${geminiResult.error}` }
-                      </span>
-                    )}
-                  </div>
-                </div>
+
+
 
                 {sheetsResult && (
                   <div className="pt-2">
