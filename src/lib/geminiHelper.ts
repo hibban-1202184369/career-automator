@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const MODELS_TO_TRY = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-2.0-flash-exp'];
+const MODELS_TO_TRY = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-3.1-pro-preview', 'gemini-2.5-flash'];
 
 export const SYSTEM_FABLE_ASTRA_PROMPT = `
 [SYSTEM REASONING DNA: Fable 5.1 & GPT-6 Astra]
