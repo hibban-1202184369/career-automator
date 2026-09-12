@@ -48,7 +48,7 @@ const DEFAULT_CONFIG: AppConfig = {
   googleCredentialsJson: '',
   geminiApiKey: '',
   searchKeywords: '',
-  excludeKeywords: 'Bank, Banking, Bank Konvensional, Pinjaman, Kredit, Leasing, Asuransi Konvensional, Riba',
+  excludeKeywords: '',
   location: '',
   minSalary: '',
   limitPerDay: 200,

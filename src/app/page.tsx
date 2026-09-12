@@ -12,7 +12,7 @@ export default function Page() {
     googleCredentialsJson: '',
     geminiApiKey: '',
     searchKeywords: 'Network Engineer, IT GRC, IT Auditor, MIS',
-    excludeKeywords: 'Bank, Banking, Bank Konvensional, Pinjaman, Kredit, Leasing, Asuransi Konvensional, Riba',
+    excludeKeywords: '',
     location: 'Indonesia',
     minSalary: '8000000',
     maxApplicationsDaily: '50',
@@ -498,9 +498,9 @@ export default function Page() {
                       value={(config as any).excludeKeywords || ""}
                       onChange={(e) => setConfig({ ...config, excludeKeywords: e.target.value } as any)}
                       className="w-full bg-[#070913] border border-amber-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500 font-mono"
-                      placeholder="Bank, Banking, Perbankan, Bank Konvensional, Pinjaman Berbunga, Kredit Konsumtif, Leasing, Asuransi Konvensional, Riba"
+                      placeholder="Contoh: kata kunci 1, kata kunci 2, kata kunci 3"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1">Pisahkan dengan koma — setiap kata/frasa yang muncul di <b className="text-slate-400">judul atau nama perusahaan</b> akan otomatis <span className="text-amber-400 font-semibold">dilewati (skip)</span>. Contoh: <code className="text-slate-400">Network Engineer</code> + exclude <code className="text-amber-400">Bank, Riba</code> → lowongan di bank tidak akan dilamar.</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Pisahkan dengan koma — setiap kata/frasa yang muncul di <b className="text-slate-400">judul atau nama perusahaan</b> akan otomatis <span className="text-amber-400 font-semibold">dilewati (skip)</span>. Contoh: <code className="text-slate-400">Network Engineer</code> + exclude <code className="text-amber-400">Bank, Riba</code></p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-2">Target Location (Lokasi)</label>
