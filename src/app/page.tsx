@@ -406,7 +406,7 @@ export default function Page() {
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`w-2 h-2 rounded-full ${geminiVerified ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
-                <span className={`text-[11px] font-medium tracking-wide ${(config as any).geminiApiKey?.trim() ? 'text-emerald-400' : 'text-amber-400'}`}>{(config as any).geminiApiKey?.trim() ? 'AI Auto-Answer Active' : 'Setup Required'}</span>
+                <span className={`text-[11px] font-medium tracking-wide ${geminiVerified ? 'text-emerald-400' : 'text-amber-400'}`}>{geminiVerified ? 'AI Auto-Answer Active' : 'Setup Required'}</span>
               </div>
             </div>
           </div>
@@ -732,7 +732,7 @@ export default function Page() {
                   <div className="space-y-4 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Gemini AI</span>
-                      {(config as any).geminiApiKey?.trim() ? (
+                      {geminiVerified ? (
                         <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">Online</span>
                       ) : (
                         <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 font-mono">Not Set</span>
@@ -1052,24 +1052,34 @@ export default function Page() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-2">Notice Period</label>
-                    <input
-                      type="text"
+                    <select
                       value={config.noticePeriod}
                       onChange={(e) => setConfig({ ...config, noticePeriod: e.target.value })}
                       className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono text-xs"
-                      placeholder="Segera / ASAP"
-                    />
+                    >
+                      <option value="Immediately">Immediately / ASAP</option>
+                      <option value="2 Weeks">2 Weeks</option>
+                      <option value="1 Month">1 Month (30 Days)</option>
+                      <option value="2 Months">2 Months</option>
+                      <option value="3 Months">3 Months</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-2">Education & GPA</label>
                     <div className="flex gap-2">
-                      <input
-                        type="text"
+                      <select
                         value={config.educationLevel}
                         onChange={(e) => setConfig({ ...config, educationLevel: e.target.value })}
                         className="w-2/3 bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500"
-                        placeholder="S2 Magister"
-                      />
+                      >
+                        <option value="">Pilih Pendidikan</option>
+                        <option value="SMA/SMK">SMA / SMK</option>
+                        <option value="D3">D3 - Diploma</option>
+                        <option value="D4">D4 - Diploma IV</option>
+                        <option value="S1">S1 - Sarjana</option>
+                        <option value="S2">S2 - Magister</option>
+                        <option value="S3">S3 - Doktor</option>
+                      </select>
                       <input
                         type="text"
                         value={config.gpa}
@@ -1078,6 +1088,21 @@ export default function Page() {
                         placeholder="3.48"
                       />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-2">Program Studi</label>
+                    <select
+                      value={(config as any).programStudi || ''}
+                      onChange={(e) => setConfig({ ...config, programStudi: e.target.value } as any)}
+                      className="w-full bg-[#070913] border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    >
+                      <option value="">Pilih Program Studi</option>
+                      <option value="Teknik Informatika">Teknik Informatika</option>
+                      <option value="Sistem Informasi">Sistem Informasi</option>
+                      <option value="Ilmu Komputer">Ilmu Komputer</option>
+                      <option value="Teknologi Informasi">Teknologi Informasi</option>
+                      <option value="Manajemen Informatika">Manajemen Informatika</option>
+                    </select>
                   </div>
                 </div>
 

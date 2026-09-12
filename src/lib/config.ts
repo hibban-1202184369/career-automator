@@ -27,6 +27,7 @@ export interface AppConfig {
   customChromePath?: string;
   browserWsEndpoint?: string;
   noticePeriod: string;
+  programStudi: string;
   // Platform Session Cookies (JSON string array or raw cookie string)
   glintsCookies: string;
   jobstreetCookies: string;
@@ -44,6 +45,7 @@ export interface AppConfig {
   linkedinUrl: string;
   phoneNumber: string;
   domicile: string;
+  knownTools: string;
 }
 
 const CONFIG_PATH = path.join(process.cwd(), 'config.json');
@@ -74,6 +76,7 @@ const DEFAULT_CONFIG: AppConfig = {
   customChromePath: '',
   browserWsEndpoint: '',
   noticePeriod: 'Immediately',
+  programStudi: '',
   glintsCookies: '',
   jobstreetCookies: '',
   linkedinCookies: '',
@@ -89,6 +92,7 @@ const DEFAULT_CONFIG: AppConfig = {
   linkedinUrl: '',
   phoneNumber: '',
   domicile: '',
+  knownTools: '',
 };
 
 // Helper to get value from env with fallback
