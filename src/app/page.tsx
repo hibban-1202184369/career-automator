@@ -65,6 +65,8 @@ export default function Page() {
   const [sheetsResult, setSheetsResult] = useState<any>(null);
   const [geminiChecking, setGeminiChecking] = useState(false);
   const [geminiResult, setGeminiResult] = useState<any>(null);
+  const [cvOptimizing, setCvOptimizing] = useState(false);
+  const [cvResult, setCvResult] = useState<any>(null);
 
 
   // Load config on mount - also restore Gemini key from localStorage cache
@@ -226,6 +228,55 @@ export default function Page() {
       console.error(e);
     }
     fetchAppliedHistory();
+  };
+
+  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const apiKey = ((config as any).geminiApiKey || '').trim();
+    if (!apiKey) {
+      setCvResult({ success: false, error: 'Isi API Key Gemini di atas terlebih dahulu.' });
+      return;
+    }
+    setCvOptimizing(true);
+    setCvResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('cv', file);
+      formData.append('apiKey', apiKey);
+      const res = await fetch('/api/optimize-cv', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!data.success) {
+        setCvResult({ success: false, error: data.error || 'Gagal mengoptimalkan CV' });
+        return;
+      }
+      const d = data.data;
+      // Auto-fill Candidate Profile
+      setConfig((prev: any) => ({
+        ...prev,
+        fullName: d.fullName || prev.fullName,
+        email: d.email || prev.email,
+        phoneNumber: d.phoneNumber || prev.phoneNumber,
+        domicile: d.domicile || prev.domicile,
+        educationLevel: d.educationLevel || prev.educationLevel,
+        gpa: d.gpa || prev.gpa,
+        yearsOfExperience: d.yearsOfExperience ?? prev.yearsOfExperience,
+        skills: d.skills || prev.skills,
+        portfolioUrl: d.portfolioUrl || prev.portfolioUrl,
+        githubUrl: d.githubUrl || prev.githubUrl,
+        linkedinUrl: d.linkedinUrl || prev.linkedinUrl,
+        expectedSalary: d.expectedSalary ?? prev.expectedSalary,
+        searchKeywords: d.searchKeywords || prev.searchKeywords,
+      }));
+      // Save immediately
+      setTimeout(() => handleSaveConfig(), 500);
+      setCvResult({ success: true, message: 'CV berhasil dioptimalkan & Candidate Profile + Search Keywords terisi otomatis!' });
+    } catch (err: any) {
+      setCvResult({ success: false, error: err.message || 'Gagal mengunggah CV' });
+    } finally {
+      setCvOptimizing(false);
+      e.target.value = '';
+    }
   };
 
   const handleTestGemini = async () => {
@@ -448,6 +499,51 @@ export default function Page() {
                 )}
               </div>
 
+              {/* 📄 CV ATS Auto-Fill System */}
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-teal-950/40 to-emerald-950/40 border border-teal-500/30 space-y-4 shadow-xl shadow-teal-900/20">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">📄</span>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Upload CV ATS Anda (Auto-Optimize & Auto-Fill)</h4>
+                    <p className="text-xs text-slate-300">Unggah CV ATS (PDF) Anda. Sistem AI akan otomatis mengoptimalkannya, mengisi Candidate Profile, dan Menghasilkan Search Keywords yang Relevan.</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                  <div className="flex-1 w-full">
+                    <label className="block text-xs font-semibold text-slate-200 mb-2">File CV ATS (PDF)</label>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleCVUpload}
+                      disabled={!((config as any).geminiApiKey || '').trim() || cvOptimizing}
+                      className="w-full text-xs text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-teal-600 file:text-white hover:file:bg-teal-500 file:transition bg-[#070913] border border-teal-500/30 rounded-xl p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    {!((config as any).geminiApiKey || '').trim() && (
+                      <p className="text-[11px] text-amber-400 mt-2">⚠️ Isi API Key Gemini di atas terlebih dahulu untuk membuka fitur upload CV.</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('cv-file-input')?.click()}
+                    disabled
+                    className="hidden"
+                  >Hidden</button>
+                </div>
+
+                {cvOptimizing && (
+                  <div className="text-xs text-teal-300 flex items-center gap-2">
+                    <span className="animate-spin">⚙️</span> Menganalisis & Mengoptimalkan CV dengan AI...
+                  </div>
+                )}
+
+                {cvResult && (
+                  <div className={`text-xs p-3 rounded-xl border ${cvResult.success ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'}`}>
+                    {cvResult.success ? `✅ ${cvResult.message}` : `❌ ${cvResult.error}`}
+                  </div>
+                )}
+              </div>
+
 {/* Extension Auto-Sync Cookie Card */}
               <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-blue-500/30 space-y-4">
                 <div className="flex items-center justify-between">
@@ -604,7 +700,7 @@ export default function Page() {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-amber-400/90 mb-2">🚫 Exclude Keywords (Pengecualian)</label>
+                    <label className="block text-xs font-semibold text-amber-400/90 mb-2">🚫 Exclude Keywords (Pengecualian - Opsional)</label>
                     <input
                       type="text"
                       value={(config as any).excludeKeywords || ""}
