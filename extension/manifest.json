@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Career Automator Auto-Sync",
+  "version": "1.0.0",
+  "description": "Auto-sync login cookies from Glints, Jobstreet, LinkedIn, and Indeed to your Career Automator web app.",
+  "permissions": [
+    "cookies",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.glints.com/*",
+    "*://*.jobstreet.co.id/*",
+    "*://*.linkedin.com/*",
+    "*://*.indeed.com/*",
+    "http://localhost:3000/*",
+    "https://career-automator-xi.vercel.app/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

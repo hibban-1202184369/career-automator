@@ -5,6 +5,41 @@ import { runJobstreetBot } from './bots/jobstreet';
 import { runLinkedinBot } from './bots/linkedin';
 import { runIndeedBot } from './bots/indeed';
 
+
+// Helper: inject session cookies dari config (auto-login anti-keban)
+async function injectCookies(page: any, rawCookies: string, domainHint: string, log: (m:string)=>void) {
+  if (!rawCookies || !rawCookies.trim()) return;
+  try {
+    let cookies: any[] = [];
+    const s = rawCookies.trim();
+    // Support 3 format: JSON array [{name,value,domain}], Netscape, atau raw "a=b; c=d"
+    if (s.startsWith('[')) {
+      cookies = JSON.parse(s);
+    } else if (s.includes('httpOnly') || s.startsWith('# HttpOnly')) {
+      // Netscape format - skip, log warning
+      log(`⚠️ Format Netscape terdeteksi untuk ${domainHint}, gunakan Export JSON dari Cookie-Editor / Extension.`);
+      return;
+    } else {
+      // raw header "a=b; c=d"
+      cookies = s.split(';').map(pair => {
+        const idx = pair.indexOf('=');
+        if (idx === -1) return null;
+        const name = pair.slice(0, idx).trim();
+        const value = pair.slice(idx+1).trim();
+        if (!name || !value) return null;
+        return { name, value, domain: domainHint };
+      }).filter(Boolean) as any[];
+    }
+    if (cookies.length === 0) return;
+    // Normalize domain
+    const final = cookies.map(c => ({ ...c, domain: c.domain || domainHint }));
+    await page.setCookie(...final);
+    log(`🔑 Cookies injected: ${final.length} cookies for ${domainHint}`);
+  } catch (e:any) {
+    log(`⚠️ Gagal inject cookies ${domainHint}: ${e.message||e}`);
+  }
+}
+
 declare global {
   var isBotRunning: boolean;
 }
@@ -149,6 +184,7 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
         const pageGlints = await getOrNewPage();
         await pageGlints.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         const glintsLog = (msg: string) => onLog(`[Glints] ${msg}`);
+        await injectCookies(pageGlints, (config as any).glintsCookies, '.glints.com', glintsLog);
 
         glintsLog('🔍 Memulai proses bot Glints di Tab khusus...');
         try {
@@ -174,6 +210,7 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
         const pageJobstreet = await getOrNewPage();
         await pageJobstreet.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         const jobstreetLog = (msg: string) => onLog(`[Jobstreet] ${msg}`);
+        await injectCookies(pageJobstreet, (config as any).jobstreetCookies, '.jobstreet.co.id', jobstreetLog);
 
         jobstreetLog('🔍 Memulai proses bot Jobstreet di Tab khusus...');
         try {
@@ -199,6 +236,7 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
         const pageLinkedin = await getOrNewPage();
         await pageLinkedin.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         const linkedinLog = (msg: string) => onLog(`[LinkedIn] ${msg}`);
+        await injectCookies(pageLinkedin, (config as any).linkedinCookies, '.linkedin.com', linkedinLog);
 
         linkedinLog('🔍 Memulai proses bot LinkedIn di Tab khusus...');
         try {
@@ -224,6 +262,7 @@ export async function startBot(onLog: (msg: string) => void, mode: string = 'hea
         const pageIndeed = await getOrNewPage();
         await pageIndeed.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         const indeedLog = (msg: string) => onLog(`[Indeed] ${msg}`);
+        await injectCookies(pageIndeed, (config as any).indeedCookies, '.indeed.com', indeedLog);
 
         indeedLog('🔍 Memulai proses bot Indeed di Tab khusus...');
         try {

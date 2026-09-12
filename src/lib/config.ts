@@ -27,6 +27,11 @@ export interface AppConfig {
   customChromePath?: string;
   browserWsEndpoint?: string;
   noticePeriod: string;
+  // Platform Session Cookies (JSON string array or raw cookie string)
+  glintsCookies: string;
+  jobstreetCookies: string;
+  linkedinCookies: string;
+  indeedCookies: string;
   // Candidate Profile Fields
   fullName: string;
   expectedSalary: number;
@@ -69,6 +74,10 @@ const DEFAULT_CONFIG: AppConfig = {
   customChromePath: '',
   browserWsEndpoint: '',
   noticePeriod: 'Immediately',
+  glintsCookies: '',
+  jobstreetCookies: '',
+  linkedinCookies: '',
+  indeedCookies: '',
   fullName: '',
   expectedSalary: 0,
   educationLevel: '',
@@ -143,6 +152,10 @@ export function getConfig(): AppConfig {
     'CUSTOM_CHROME_PATH': 'customChromePath',
     'BROWSER_WS_ENDPOINT': 'browserWsEndpoint',
     'NOTICE_PERIOD': 'noticePeriod',
+    'GLINTS_COOKIES': 'glintsCookies',
+    'JOBSTREET_COOKIES': 'jobstreetCookies',
+    'LINKEDIN_COOKIES': 'linkedinCookies',
+    'INDEED_COOKIES': 'indeedCookies',
     'FULL_NAME': 'fullName',
     'EXPECTED_SALARY': 'expectedSalary',
     'EDUCATION_LEVEL': 'educationLevel',
