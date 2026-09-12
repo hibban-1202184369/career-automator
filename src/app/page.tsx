@@ -732,6 +732,35 @@ export default function Page() {
 
 
 
+                
+              {/* Extension Auto-Sync Cookie Card */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-blue-500/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">⚡</span>
+                    <div>
+                      <h4 className="text-sm font-bold text-white">Ekstensi Auto-Sync Cookie (Anti-Blocked & Anti-Keban)</h4>
+                      <p className="text-xs text-slate-300">Sinkronkan login Glints, Jobstreet, LinkedIn, & Indeed teman Anda secara otomatis dalam 1 klik.</p>
+                    </div>
+                  </div>
+                  <a
+                    href="https://github.com/hibban-1202184369/career-automator/tree/main/extension"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition shadow-lg shadow-blue-600/30 flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span>📥 Download Extension (GitHub)</span>
+                  </a>
+                </div>
+                <div className="text-xs text-slate-400 bg-[#070913]/60 p-3 rounded-xl border border-slate-800 space-y-1">
+                  <div className="font-semibold text-slate-300">Cara Install (30 Detik):</div>
+                  <div>1. Download / Clone folder <code className="text-blue-400">extension</code> dari GitHub.</div>
+                  <div>2. Buka <code className="text-blue-400">chrome://extensions</code> di browser Chrome Anda.</div>
+                  <div>3. Aktifkan <code className="text-blue-400">Developer mode</code> di pojok kanan atas.</div>
+                  <div>4. Klik <code className="text-blue-400">Load unpacked</code> lalu pilih folder <code className="text-blue-400">extension</code> tersebut. Selesai!</div>
+                </div>
+              </div>
+
                 {sheetsResult && (
                   <div className="pt-2">
                     <span className={`text-xs font-mono ${sheetsResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
