@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 export default function Page() {
   const [activeNav, setActiveNav] = useState<'dashboard' | 'bot' | 'profile' | 'questions' | 'logs' | 'history'>('dashboard');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Config State
   const [config, setConfig] = useState({
@@ -426,7 +427,7 @@ export default function Page() {
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveNav(item.id as any)}
+                onClick={() => { setActiveNav(item.id as any); setMobileNavOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all ${
                   activeNav === item.id
                     ? 'bg-gradient-to-r from-indigo-600/90 to-purple-600/90 text-white shadow-lg shadow-indigo-500/25 font-semibold'
@@ -456,13 +457,62 @@ export default function Page() {
           </div>
         </div>
       </aside>
+      {/* MOBILE DRAWER - overlay + slide panel */}
+      {mobileNavOpen && (
+        <div className="lg:hidden fixed inset-0 z-40 flex">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
+          <aside className="relative w-72 max-w-[85vw] bg-[#0b1021] border-r border-[#1e264a] flex flex-col justify-between shrink-0 h-screen overflow-y-auto shadow-2xl animate-slide-in">
+            <div>
+              <div className="p-6 border-b border-[#1e264a] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white font-bold text-xl">⚡</div>
+                  <div>
+                    <h1 className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">Career Automator</h1>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={`w-2 h-2 rounded-full ${geminiVerified ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                      <span className={`text-[11px] font-medium tracking-wide ${geminiVerified ? 'text-emerald-400' : 'text-amber-400'}`}>{geminiVerified ? 'AI Auto-Answer Active' : 'Setup Required'}</span>
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => setMobileNavOpen(false)} className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300" aria-label="Close">✕</button>
+              </div>
+              <nav className="p-4 space-y-1.5">
+                {[
+                  { id: 'dashboard', label: 'Command Center', icon: '⚡' },
+                  { id: 'bot', label: 'Bot Engine Setup', icon: '⚙️' },
+                  { id: 'profile', label: 'Candidate Profile', icon: '👤' },
+                  { id: 'questions', label: 'Screening Q&A', icon: '📋' },
+                  { id: 'logs', label: 'Live Console Logs', icon: '📟' },
+                  { id: 'history', label: 'Application Audit', icon: '📈' },
+                ].map((item) => (
+                  <button
+                    key={'m-'+item.id}
+                    onClick={() => { setActiveNav(item.id as any); setMobileNavOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all ${activeNav === item.id ? 'bg-gradient-to-r from-indigo-600/90 to-purple-600/90 text-white shadow-lg shadow-indigo-500/25 font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+                  >
+                    <span className="text-lg">{item.icon}</span><span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+            <div className="p-4 m-4 rounded-xl bg-[#0f172a] border border-[#232d59] text-xs space-y-2">
+              <div className="flex justify-between items-center text-slate-400"><span>AI Engine</span><span className={`font-mono ${geminiVerified ? 'text-emerald-400' : 'text-amber-400'}`}>{geminiVerified ? 'Gemini Ready' : 'Not Set'}</span></div>
+              <div className="flex justify-between items-center text-slate-400"><span>Answer Engine</span><span className="text-indigo-300 font-mono">Fable & Astra Logic</span></div>
+              <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500 flex justify-between"><span>v2.5 Pro Enterprise</span><span className="text-cyan-400">Secure</span></div>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-72">
         {/* TOP COMMAND HEADER */}
-        <header className="h-20 bg-[#0b1021]/80 backdrop-blur-md border-b border-[#1e264a] px-6 lg:px-10 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <div className="lg:hidden text-2xl">⚡</div>
+        <header className="h-14 sm:h-20 bg-[#0b1021]/80 backdrop-blur-md border-b border-[#1e264a] px-4 sm:px-6 lg:px-10 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <button onClick={() => setMobileNavOpen(v=>!v)} className="lg:hidden w-10 h-10 rounded-xl bg-[#0f172a] border border-[#232d59] flex items-center justify-center text-slate-200 hover:bg-slate-800 transition shrink-0" aria-label="Toggle navigation">
+              <span>{mobileNavOpen ? '✕' : '☰'}</span>
+            </button>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex lg:hidden items-center justify-center text-white font-bold text-sm shrink-0">⚡</div>
             <div>
               <h2 className="text-lg font-bold capitalize tracking-tight text-white flex items-center gap-2">
                 {activeNav === 'dashboard' && 'Command Center Overview'}
