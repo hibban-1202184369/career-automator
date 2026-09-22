@@ -1,5 +1,4 @@
 import { isJobAlreadyApplied, addAppliedJob } from '../googleSheets';
-import { appendQuestionToCsv } from '../csvHelper';
 import { answerQuestion } from '../questionAnswer';
 import { generateCoverLetter } from '../coverLetterHelper';
 
@@ -167,15 +166,6 @@ export async function runIndeedBot(
           continue;
         }
 
-        // Filter pengecualian (exclude keywords)
-        {
-          const __ex = (config as any).__isExcluded?.(cardInfo.title, cardInfo.company);
-          if (__ex) {
-            onLog(`🚫 [${i + 1}/${jobCards.length}] Melewati "${cardInfo.title}" - Terfilter kata kunci pengecualian: "${__ex}".`);
-            continue;
-          }
-        }
-
         onLog('==================================================');
         onLog(`💼 [${i + 1}/${jobCards.length}] Lowongan: "${cardInfo.title}"`);
         onLog(`🏢 Perusahaan: "${cardInfo.company}" | 📍 ${cardInfo.location}`);
@@ -223,13 +213,6 @@ export async function runIndeedBot(
 
         const activeTitle = detailInfo?.officialTitle || cardInfo.title;
         const activeCompany = detailInfo?.officialCompany || cardInfo.company;
-        {
-          const __ex2 = (config as any).__isExcluded?.(activeTitle, activeCompany);
-          if (__ex2) {
-            onLog(`🚫 Melewati "${activeTitle}" - Terfilter kata kunci pengecualian (detail): "${__ex2}".`);
-            continue;
-          }
-        }
 
         if (!detailInfo || !detailInfo.hasIndeedApply) {
           if (detailInfo?.isExternal) {
@@ -636,7 +619,6 @@ export async function runIndeedBot(
                 for (const qItem of unfilledQuestions) {
                   const chosenAnswers = await answerQuestion(qItem.question, qItem.options, qItem.type as any);
                   onLog(`🤖 [Indeed] Q: "${qItem.question}" -> Ans: [${chosenAnswers.join(' | ')}]`);
-                  appendQuestionToCsv(qItem.question, qItem.type as any, qItem.options, chosenAnswers);
 
                   // Tulis ke DOM
                   await activeFrame.evaluate(async (targetQ: any, answers: string[]) => {

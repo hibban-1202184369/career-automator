@@ -1,5 +1,4 @@
 import { isJobAlreadyApplied, addAppliedJob } from '../googleSheets';
-import { appendQuestionToCsv } from '../csvHelper';
 import { answerQuestion } from '../questionAnswer';
 
 export interface BotMetrics {
@@ -397,12 +396,7 @@ export async function runGlintsBot(
 
           const targetJob = chunkJobs[i];
           workerLog('==================================================');
-                      const excludedBy = (config as any).__isExcluded?.(targetJob.title, targetJob.company);
-            if (excludedBy) {
-                workerLog(`🚫 Melewati "${targetJob.title}" - Terfilter kata kunci pengecualian: "${excludedBy}".`);
-                continue;
-            }
-            workerLog(`💼 Memproses Lowongan [${i + 1}/${chunkJobs.length}]: "${targetJob.title}"`);
+          workerLog(`💼 Memproses Lowongan [${i + 1}/${chunkJobs.length}]: "${targetJob.title}"`);
           workerLog(`🏢 Perusahaan: "${targetJob.company}"`);
           workerLog(`📍 Lokasi: ${targetJob.location || 'Indonesia'} | 💰 ${targetJob.salary}`);
           workerLog(`🔗 URL: ${targetJob.url}`);
@@ -672,7 +666,6 @@ export async function runGlintsBot(
 
                   const chosenAnswers = await answerQuestion(qItem.question, qItem.options, qItem.type as any);
                   workerLog(`🤖 Keputusan Jawaban: [${chosenAnswers.join(' | ')}]`);
-                  appendQuestionToCsv(qItem.question, qItem.type as any, qItem.options, chosenAnswers);
 
                   // Terapkan pilihan ke DOM Glints
                   await workerPage.evaluate((targetQ: any, answers: string[]) => {
