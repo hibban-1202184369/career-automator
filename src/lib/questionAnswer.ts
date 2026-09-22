@@ -22,147 +22,90 @@ import { parse } from "csv-parse/sync";
 import fs, { readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getConfig } from "./config";
-import { callGeminiWithFallback, SYSTEM_FABLE_ASTRA_PROMPT } from "./geminiHelper";
-import { getScraplingHeaders, ScraplingAdaptiveFetcher } from "./scraplingHelper";
+import { AppConfig, getConfig } from "./config";
+import { getQuestionsFromSheet, ScreeningQuestionItem } from "./googleSheets";
 
-// ---------------------------------------------------------------------------
-// 1. YOUR PROFILE — edit these to match your actual situation
-// ---------------------------------------------------------------------------
-const skills = [
-  // Networking & Infrastructure
-  "Cisco",
-  "CCNA",
-  "MikroTik",
-  "MTCNA",
-  "LAN",
-  "WAN",
-  "TCP/IP",
-  "Fiber Optic",
-  "Routing",
-  "Switching",
-  "Network Design",
-  "Network Security",
-  "Network Administration",
-  "VPN",
-  "Firewall",
-  "VLAN",
-
-  // GRC & Cybersecurity
-  "IT GRC",
-  "Governance",
-  "Risk Management",
-  "Compliance",
-  "ISO 27001",
-  "ISO 20000",
-  "NIST CSF 2.0",
-  "IT Audit",
-  "CISA",
-  "Cybersecurity",
-  "Information Security",
-  "Risk Assessment",
-  "Internal Audit",
-  "Security Framework",
-
-  // Cloud & Virtualization
-  "Alibaba Cloud",
-  "Google Cloud Platform",
-  "Virtualization",
-  "VMware",
-  "Hyper-V",
-
-  // Tools & Software
-  "Nginx",
-  "Wireshark",
-  "Packet Tracer",
-  "GNS3",
-  "Microsoft Office",
-  "Visio",
-
-  // Leadership & Management
-  "Personnel Management",
-  "Stakeholder Management",
-  "Technical Leadership",
-  "Project Management",
-  "Team Coordination",
-
-  // Methodologies
-  "ITIL",
-  "COBIT",
-  "Agile",
-  "Problem Solving",
-  "Debugging"
+const defaultSkills = [
+  "JavaScript", "TypeScript", "Python", "Java", "C#", "C++", "PHP", "Go", "HTML", "CSS",
+  "React", "React.js", "Next.js", "Angular", "Angular.js", "Tailwind CSS", "Bootstrap", "jQuery",
+  "Framer Motion", "Three.js", "React Three Fiber", "Drei", "Node.js", "Express.js", "Fiber", "GORM",
+  "REST API", "RESTful API", "Redis", "RabbitMQ", "Celery", "Asynq", "message queue", "kafka",
+  "PostgreSQL", "MySQL", "Supabase", "Prisma", "SQL", "Docker", "Nginx", "PM2", "Git", "GitHub",
+  "GitHub Actions", "Cloudflare", "Let's Encrypt", "Certbot", "CI/CD", "Postman", "VS Code",
+  "Full Stack Development", "Backend Development", "Frontend Development", "Web Development",
+  "API Development", "Database Design", "Microservices", "Object-Oriented Programming",
+  "Asynchronous Programming", "Blender", "TouchDesigner", "MediaPipe", "figma", "clickup", "jira",
+  "trello", "slack", "notion", "Agile", "Scrum", "Problem Solving", "Debugging"
 ];
 
-
-
-export function getDynamicProfile() {
+export function getDynamicProfile(customConfig?: AppConfig) {
   try {
-    const cfg = getConfig();
+    const cfg = customConfig || getConfig();
     return {
-      expectedMonthlySalaryIDR: Number(cfg.expectedSalary) || 15_000_000,
-      educationLevel: cfg.educationLevel || "Magister (S2)",
-      gpa: cfg.gpa || "3.48",
-      defaultExperienceYears: Number(cfg.yearsOfExperience) || 5,
+      expectedMonthlySalaryIDR: Number(cfg.expectedSalary) || 8_000_000,
+      educationLevel: cfg.educationLevel || "Sarjana (S1)",
+      gpa: cfg.gpa || "3.75",
+      defaultExperienceYears: Number(cfg.yearsOfExperience) || 3,
       experienceByRole: [
-        { keywords: ["grc", "governance", "risk", "compliance"], years: Number(cfg.yearsOfExperience) || 5 },
-        { keywords: ["network", "cisco", "mikrotik", "routing", "switching"], years: Number(cfg.yearsOfExperience) || 5 },
-        { keywords: ["audit", "it audit", "cisa"], years: Number(cfg.yearsOfExperience) || 5 },
-        { keywords: ["cybersecurity", "security", "nist", "iso"], years: Number(cfg.yearsOfExperience) || 5 },
-        { keywords: ["leadership", "foreman", "lead", "supervise"], years: Number(cfg.yearsOfExperience) || 5 },
+        { keywords: ["full stack", "fullstack"], years: Number(cfg.yearsOfExperience) || 3 },
+        { keywords: ["backend"], years: Number(cfg.yearsOfExperience) || 3 },
+        { keywords: ["java developer", "java"], years: 2 },
+        { keywords: ["postgresql", "postgres"], years: 2 },
+        { keywords: ["web developer"], years: Number(cfg.yearsOfExperience) || 3 },
+        { keywords: ["software development", "programmer"], years: Number(cfg.yearsOfExperience) || 3 },
         { keywords: ["sales", "marketing"], years: 0 },
       ],
       workRights: {
         id: "Saya adalah warga negara Indonesia",
         en: "I'm an Indonesian citizen",
       },
-      preferredResumeHint: "IT GRC & Network Engineer - Magister IT",
+      preferredResumeHint: "Full Stack Developer - Glints TapLoker",
       resumeFallback: "Don't include a resumé",
       coverLetterPreference: "Don't include a cover letter",
       wantDefaultResume: true,
-      knownTools: ["git", "wireshark", "visio", "packet tracer"],
-      portfolio: cfg.portfolioUrl || "https://linkedin.com/in/muhammad-hibban-mikhail",
-      github: cfg.githubUrl || "https://github.com/hibban",
-      linkedin: cfg.linkedinUrl || "https://linkedin.com/in/muhammad-hibban-mikhail",
+      knownTools: ["git", "svn", "subversion"],
+      portfolio: cfg.portfolioUrl || "https://github.com/yogaadi",
+      github: cfg.githubUrl || "https://github.com/yogaadi",
+      linkedin: cfg.linkedinUrl || "https://www.linkedin.com",
       noticePeriod: cfg.noticePeriod || "Immediately",
     };
   } catch {
     return {
-      expectedMonthlySalaryIDR: 15_000_000,
-      educationLevel: "Magister (S2)",
-      gpa: "3.48",
-      defaultExperienceYears: 5,
+      expectedMonthlySalaryIDR: 8_000_000,
+      educationLevel: "Sarjana (S1)",
+      gpa: "3.75",
+      defaultExperienceYears: 3,
       experienceByRole: [
-        { keywords: ["grc", "governance", "risk", "compliance"], years: 5 },
-        { keywords: ["network", "cisco", "mikrotik"], years: 5 },
-        { keywords: ["audit"], years: 5 },
+        { keywords: ["full stack", "fullstack"], years: 3 },
+        { keywords: ["backend"], years: 3 },
+        { keywords: ["web developer"], years: 3 },
       ],
       workRights: {
         id: "Saya adalah warga negara Indonesia",
         en: "I'm an Indonesian citizen",
       },
-      preferredResumeHint: "IT GRC & Network Engineer",
+      preferredResumeHint: "Full Stack Developer",
       resumeFallback: "Don't include a resumé",
       coverLetterPreference: "Don't include a cover letter",
       wantDefaultResume: true,
       knownTools: ["git"],
-      portfolio: "https://linkedin.com/in/muhammad-hibban-mikhail",
-      github: "https://github.com/hibban",
-      linkedin: "https://linkedin.com/in/muhammad-hibban-mikhail",
+      portfolio: "https://github.com/yogaadi",
+      github: "https://github.com/yogaadi",
+      linkedin: "https://www.linkedin.com",
       noticePeriod: "Immediately",
     };
   }
 }
 
-export function getDynamicSkills(): string[] {
+export function getDynamicSkills(customConfig?: AppConfig): string[] {
   try {
-    const cfg = getConfig();
+    const cfg = customConfig || getConfig();
     if (cfg.skills && cfg.skills.trim().length > 0) {
       const userSkills = cfg.skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
-      return Array.from(new Set([...userSkills, ...skills]));
+      return Array.from(new Set([...userSkills, ...defaultSkills]));
     }
   } catch {}
-  return skills;
+  return defaultSkills;
 }
 
 // ---------------------------------------------------------------------------
@@ -276,9 +219,9 @@ function closestExperienceOption(options: string[], years: number): string {
   return best;
 }
 
-function yearsForRole(question: string): number {
-  const cfg = getConfig();
-  const profile = getDynamicProfile();
+function yearsForRole(question: string, customConfig?: AppConfig): number {
+  const cfg = customConfig || getConfig();
+  const profile = getDynamicProfile(cfg);
   const defaultYrs = Number(cfg.yearsOfExperience) || profile.defaultExperienceYears || 3;
   const lower = question.toLowerCase();
 
@@ -304,13 +247,14 @@ function yearsForRole(question: string): number {
 function tryRegexAnswer(
   question: string,
   options: string[],
-  type: QuestionType
+  type: QuestionType,
+  customConfig?: AppConfig
 ): string[] | null {
+  const cfg = customConfig || getConfig();
   const q = question.toLowerCase();
-  const profile = getDynamicProfile();
-  const dynamicSkills = getDynamicSkills();
+  const profile = getDynamicProfile(cfg);
+  const dynamicSkills = getDynamicSkills(cfg);
 
-  const cfg = getConfig();
   const fullName = (cfg.fullName || "Yoga Adi Saputra").trim();
   const nameParts = fullName.split(/\s+/);
   const firstName = nameParts[0] || "Yoga";
@@ -331,7 +275,7 @@ function tryRegexAnswer(
 
   // 2. Kontak: Nomor Telepon, Handphone, Mobile, WhatsApp
   if (/^(?:phone|telephone|mobile|handphone|nomor\s*hp|nomor\s*telepon|nomor\s*wa|whatsapp|telp)(\s*\*|\s*:)?$/i.test(q) || /\b(phone|mobile|telepon|handphone|hp)\b/i.test(q)) {
-    return [cfg.phoneNumber || ""];
+    return [cfg.phoneNumber || "081234567890"];
   }
 
   // 3. Email
@@ -650,96 +594,92 @@ function tryRegexAnswer(
 // 5. LLM fallback for anything regex couldn't classify
 // ---------------------------------------------------------------------------
 
-function getApiKey(): string {
-  try {
-    const cfg = getConfig();
-    if (cfg.geminiApiKey && cfg.geminiApiKey.trim() !== "") return cfg.geminiApiKey.trim();
-  } catch {}
-  return process.env.GEMINI_API_KEY || "";
-}
-
-function getAI(): GoogleGenerativeAI | null {
-  const key = getApiKey();
-  if (!key) return null;
-  return new GoogleGenerativeAI(key);
+function getGeminiAi(customConfig?: AppConfig): GoogleGenerativeAI | null {
+  const cfg = customConfig || getConfig();
+  const apiKey = (cfg.geminiApiKey || process.env.GEMINI_API_KEY || '').trim();
+  if (!apiKey) return null;
+  return new GoogleGenerativeAI(apiKey);
 }
 
 async function askLLM(
   question: string,
   options: string[],
-  type: QuestionType
+  type: QuestionType,
+  customConfig?: AppConfig
 ): Promise<string[]> {
-  const profile = getDynamicProfile();
-  const dynamicSkills = getDynamicSkills();
-  const cfg = getConfig();
-
-  // Fable 5.1 + GPT Astra reasoning is EMBEDDED as system instruction - no external gateway needed
-  const systemLogic = "You are an elite Recruitment Screening Analyst applying Fable 5.1 rigor (verifiable, evidence-only, zero hallucination) and GPT Astra execution (surgical, outcome-first, direct). Answer strictly from candidate facts.";
+  const cfg = customConfig || getConfig();
+  const profile = getDynamicProfile(cfg);
+  const dynamicSkills = getDynamicSkills(cfg);
 
   if (type === "text" || options.length === 0) {
-    const prompt = systemLogic + `
+    const prompt = `You are answering a job application screening question on behalf of a candidate.
 
 Candidate profile:
-- Role/Skills: ` + "${dynamicSkills.slice(0, 15).join(', ')}" + `
-- Experience: ` + "${profile.defaultExperienceYears} years" + `
-- Education: ` + "${profile.educationLevel}, GPA: ${profile.gpa}" + `
-- Expected salary: Rp ` + "${profile.expectedMonthlySalaryIDR.toLocaleString(\"id-ID\")}" + `
-- Availability: ` + "${profile.noticePeriod}" + `
+- Role: Full Stack Developer (Skills: ${dynamicSkills.slice(0, 15).join(', ')})
+- Experience: ${profile.defaultExperienceYears} years
+- Education: ${profile.educationLevel}, GPA: ${profile.gpa}
+- Expected salary: Rp ${profile.expectedMonthlySalaryIDR.toLocaleString("id-ID")}
+- Availability: ${profile.noticePeriod}
 
-Question: "` + '${question}' + `"
+Question: "${question}"
 
-Reply concise (1-2 sentences), professional, same language as question.`;
+Reply with a concise, highly professional, direct answer (1-2 sentences maximum, or just the number/fact if it's a simple factual question). Reply in the same language as the question (Indonesian or English).`;
 
     try {
-      const aiClient = getAI();
-      if (aiClient) {
-        const model = aiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const aiInstance = getGeminiAi(customConfig);
+      if (aiInstance) {
+        const model = aiInstance.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(prompt);
         const text = (result.response.text() || "").trim();
         if (text) return [text];
       }
     } catch {}
 
-    // Context-aware fallback (Fable/Astra style: deterministic before guessing)
+    // Smart context-aware fallback based on question intent (when AI is unavailable or offline)
     const lowerQ = question.toLowerCase();
     if (/notice|asap|join|mulai kerja|bergabung/i.test(lowerQ)) {
       const notice = profile.noticePeriod || "Immediately";
       return [/asap|immediately|segera/i.test(notice) ? "Saya bersedia untuk segera bergabung (ASAP / Immediately)." : notice];
     }
-    if (/english|bahasa inggris|rate|1 to 10/i.test(lowerQ)) return ["8"];
+    if (/salary|gaji|penghasilan|upah|ekspektasi gaji/i.test(lowerQ)) {
+      return [String(profile.expectedMonthlySalaryIDR || 8000000)];
+    }
+    if (/english|bahasa inggris|rate|1 to 10|skala 1/i.test(lowerQ)) return ["8"];
     if (/gpa|ipk/i.test(lowerQ)) return [profile.gpa || "3.75"];
-    if (/experience|tahun/i.test(lowerQ)) return [String(profile.defaultExperienceYears || 3)];
+    if (/experience|tahun|lama bekerja/i.test(lowerQ)) return [String(profile.defaultExperienceYears || 3)];
     if (/project|proyek/i.test(lowerQ)) return ["4"];
     if (/age|umur|usia/i.test(lowerQ)) return ["24"];
-    if (/phone|telepon|hp|mobile/i.test(lowerQ)) return [cfg.phoneNumber || ""];
-    if (/name|nama/i.test(lowerQ)) return [cfg.fullName || ""];
-    if (/why|alasan|describe|ceritakan|jelaskan|introduce/i.test(lowerQ)) {
-      return [`I have ` + "${profile.defaultExperienceYears}" + `+ years of professional experience with strong expertise in ` + "${dynamicSkills.slice(0, 6).join(\", \")}" + `.`];
+    if (/phone|telepon|hp|mobile|wa|whatsapp/i.test(lowerQ)) return [cfg.phoneNumber || "081234567890"];
+    if (/name|nama/i.test(lowerQ)) return [cfg.fullName || "Yoga Adi Saputra"];
+    if (/why|alasan|describe|ceritakan|jelaskan|introduce|tentang anda/i.test(lowerQ)) {
+      return ["Saya memiliki keahlian dan pengalaman kerja yang relevan serta siap berkontribusi secara maksimal untuk posisi ini."];
     }
-    return ["Yes"];
+    return ["Ya"];
   }
 
   const multiSelect = type === "checklist";
 
-  const prompt = systemLogic + `
+  const prompt = `You are filling out a job application screening question on behalf of a candidate.
 
 Candidate profile:
-- Expected monthly salary: Rp ` + "${profile.expectedMonthlySalaryIDR.toLocaleString(\"id-ID\")}" + `
-- Education: ` + "${profile.educationLevel}" + `
-- Experience: ` + "${profile.experienceByRole.map((e) => `${e.keywords[0]}: ${e.years} years`).join(\", \")}" + `; default ` + "${profile.defaultExperienceYears} years for anything else." + `
-- Right to work: ` + "${profile.workRights.en}" + `
-- Known tools: ` + "${profile.knownTools.join(\", \")}" + `
+- Expected monthly salary: Rp ${profile.expectedMonthlySalaryIDR.toLocaleString("id-ID")}
+- Education: ${profile.educationLevel}
+- Experience: ${profile.experienceByRole
+    .map((e) => `${e.keywords[0]}: ${e.years} years`)
+    .join(", ")}; default ${profile.defaultExperienceYears} years for anything else.
+- Right to work: ${profile.workRights.en}
+- Known tools: ${profile.knownTools.join(", ")}
 
-Question: "` + '${question}' + `"
-Question type: ` + '${type}' + ` (` + '${multiSelect ? "you may choose MULTIPLE options" : "choose exactly ONE option"}' + `)
-Allowed options (copy chosen ones verbatim): ` + '${options.map((o) => `"${o}"`).join(" | ")}' + `
+Question: "${question}"
+Question type: ${type} (${multiSelect ? "you may choose MULTIPLE options" : "choose exactly ONE option"})
+Allowed options (copy chosen ones verbatim): ${options.map((o) => `"${o}"`).join(" | ")}
 
 Reply with ONLY the chosen option(s), copied exactly from the list. If choosing multiple, separate them with " || ". Nothing else.`;
 
   try {
-    const aiClient = getAI();
-    if (aiClient) {
-      const model = aiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const aiInstance = getGeminiAi(customConfig);
+    if (aiInstance) {
+      const model = aiInstance.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(prompt);
       const text = (result.response.text() || "").trim();
 
@@ -749,62 +689,13 @@ Reply with ONLY the chosen option(s), copied exactly from the list. If choosing 
     }
   } catch {}
 
-  // Smart options fallback
-  const firstMatch = options.find(o => /^(ya|yes|setuju|agree|fluent|mahir|sarjana|s1|full-time|wfo|hybrid|remote)$/i.test(o.trim()));
-  return [firstMatch || options[0] || ""];
-}
-
-
-// ---------------------------------------------------------------------------
-// 6. Main pipeline
-// ---------------------------------------------------------------------------
-
-async function main() {
-  const inputPath = process.argv[2];
-  if (!inputPath) {
-    console.error("Usage: npx tsx answer-screening-questions-v2.ts <input.csv>");
-    process.exit(1);
-  }
-
-  const rows = loadRows(inputPath);
-  const results: AnsweredRow[] = [];
-
-  for (const row of rows) {
-    const options = splitOptions(row.optionsRaw);
-    const regexAnswer = tryRegexAnswer(row.question, options, row.type);
-
-    if (regexAnswer !== null) {
-      results.push({ ...row, options, answers: regexAnswer, source: "regex" });
-      continue;
-    }
-
-    try {
-      const llmAnswer = await askLLM(row.question, options, row.type);
-      results.push({ ...row, options, answers: llmAnswer, source: "llm" });
-    } catch (err) {
-      console.error(`LLM call failed for "${row.question}":`, err);
-      results.push({ ...row, options, answers: [], source: "unmatched" });
-    }
-  }
-
-  const regexCount = results.filter((r) => r.source === "regex").length;
-  const llmCount = results.filter((r) => r.source === "llm").length;
-  const unmatchedCount = results.filter((r) => r.source === "unmatched").length;
-  console.log(
-    `Done: ${results.length} questions -> ${regexCount} via regex, ${llmCount} via LLM, ${unmatchedCount} unmatched`
-  );
-
-  const outPath = inputPath.replace(/\.csv$/, "") + "-answered.csv";
-  const csvLines = results.map((r) => {
-    const answerStr = r.answers.join(" || ").replace(/"/g, '""');
-    return `"${r.url}","${r.question.replace(/"/g, '""')}","${r.type}","${answerStr}","${r.source}"`;
-  });
-  writeFileSync(outPath, csvLines.join("\n"), "utf-8");
-  console.log(`Written to ${outPath}`);
+  // Smart options fallback (pilihan cerdas / opsi pertama jika tanpa AI)
+  const firstMatch = options.find(o => /^(ya|yes|setuju|agree|fluent|mahir|sarjana|s1|full-time|wfo|hybrid|remote|bersedia|ada|siap|sangat siap|bisa|bisa segera)$/i.test(o.trim()));
+  return [firstMatch || options[0] || "Ya"];
 }
 
 // ---------------------------------------------------------------------------
-// 5. In-Memory Knowledge Base Cache (High-Performance RAM Lookup)
+// 6. In-Memory Knowledge Base Cache (Google Sheets & Local Fallback)
 // ---------------------------------------------------------------------------
 
 interface CachedQuestion {
@@ -817,7 +708,7 @@ interface CachedQuestion {
 }
 
 let memoryCache: {
-  mtimeMs: number;
+  timestamp: number;
   items: CachedQuestion[];
 } | null = null;
 
@@ -825,77 +716,94 @@ export function invalidateKnowledgeBaseCache() {
   memoryCache = null;
 }
 
-export function getKnowledgeBase(): CachedQuestion[] {
-  const csvPath = path.join(process.cwd(), 'public', 'imploye-question.csv');
-  if (!fs.existsSync(csvPath)) return [];
+export function transformQuestionsToCache(
+  questions: Array<{ question: string; type?: string; options?: string; answer?: string }>
+): CachedQuestion[] {
+  const items: CachedQuestion[] = [];
+  for (const row of questions) {
+    const q = (row.question || '').trim();
+    const answerRaw = (row.answer || '').trim();
+    if (!q || !answerRaw) continue;
 
-  try {
-    const stats = fs.statSync(csvPath);
-    if (memoryCache && memoryCache.mtimeMs === stats.mtimeMs) {
-      return memoryCache.items;
-    }
+    const clean = q.toLowerCase().trim();
+    const normalized = clean.replace(/[^a-z0-9]/g, '');
+    const words = new Set(clean.split(/\s+/).filter(w => w.length > 2));
+    const answers = answerRaw.split('||').map(a => a.trim()).filter(a => a.length > 0);
+    const options = (row.options || '').split('|').map(o => o.trim()).filter(o => o.length > 0);
 
-    const content = fs.readFileSync(csvPath, 'utf8');
-    const records: string[][] = parse(content, {
-      columns: false,
-      skip_empty_lines: true,
-      relax_column_count: true,
-      relax_quotes: true,
+    items.push({
+      rawQuestion: q,
+      normalized,
+      words,
+      type: (row.type || 'radiobutton').toLowerCase().trim(),
+      options,
+      answers,
     });
-
-    const items: CachedQuestion[] = [];
-    for (let i = 1; i < records.length; i++) {
-      const cols = records[i];
-      if (!cols || cols.length < 2) continue;
-
-      let q = '';
-      let type = '';
-      let optionsRaw = '';
-      let answerRaw = '';
-
-      if (cols.length >= 4) {
-        q = cols[0] || '';
-        type = (cols[1] || '').trim().toLowerCase();
-        optionsRaw = cols[2] || '';
-        answerRaw = cols[3] || '';
-      } else if (cols.length === 3) {
-        q = cols[0] || '';
-        optionsRaw = cols[1] || '';
-        answerRaw = cols[2] || '';
-      }
-
-      if (!q.trim() || !answerRaw.trim()) continue;
-
-      const clean = q.toLowerCase().trim();
-      const normalized = clean.replace(/[^a-z0-9]/g, '');
-      const words = new Set(clean.split(/\s+/).filter(w => w.length > 2));
-      const answers = answerRaw.split('||').map(a => a.trim()).filter(a => a.length > 0);
-      const options = optionsRaw.split('|').map(o => o.trim()).filter(o => o.length > 0);
-
-      items.push({
-        rawQuestion: q,
-        normalized,
-        words,
-        type,
-        options,
-        answers,
-      });
-    }
-
-    memoryCache = {
-      mtimeMs: stats.mtimeMs,
-      items,
-    };
-    return items;
-  } catch {
-    return memoryCache ? memoryCache.items : [];
   }
+  return items;
 }
 
-// Search local imploye-question.csv in-memory cache for matching question (Knowledge Base)
-function getPreAnsweredQuestion(questionText: string, options: string[]): string[] | null {
-  const items = getKnowledgeBase();
-  if (items.length === 0) return null;
+export async function ensureKnowledgeBaseLoaded(customConfig?: AppConfig): Promise<CachedQuestion[]> {
+  const now = Date.now();
+  if (memoryCache && now - memoryCache.timestamp < 60000) {
+    return memoryCache.items;
+  }
+
+  const cfg = customConfig || getConfig();
+
+  // 1. Priority: Load from Google Sheets (Screening Questions tab)
+  if (cfg.googleCredentialsJson && cfg.spreadsheetId) {
+    try {
+      const sheetQuestions = await getQuestionsFromSheet(false, cfg);
+      if (sheetQuestions.length > 0) {
+        const items = transformQuestionsToCache(sheetQuestions);
+        memoryCache = { timestamp: now, items };
+        return items;
+      }
+    } catch (e) {
+      console.warn('[KnowledgeBase] Failed to fetch from Google Sheets, falling back to local CSV if available:', e);
+    }
+  }
+
+  // 2. Fallback: Read local imploye-question.csv if exists
+  try {
+    const csvPath = path.join(process.cwd(), 'public', 'imploye-question.csv');
+    if (fs.existsSync(csvPath)) {
+      const content = fs.readFileSync(csvPath, 'utf8');
+      const records: string[][] = parse(content, {
+        columns: false,
+        skip_empty_lines: true,
+        relax_column_count: true,
+        relax_quotes: true,
+      });
+
+      const parsed: Array<{ question: string; type: string; options: string; answer: string }> = [];
+      for (let i = 1; i < records.length; i++) {
+        const cols = records[i];
+        if (!cols || cols.length < 2) continue;
+        if (cols.length >= 4) {
+          parsed.push({ question: cols[0] || '', type: cols[1] || '', options: cols[2] || '', answer: cols[3] || '' });
+        } else if (cols.length === 3) {
+          parsed.push({ question: cols[0] || '', type: 'radiobutton', options: cols[1] || '', answer: cols[2] || '' });
+        }
+      }
+
+      const items = transformQuestionsToCache(parsed);
+      memoryCache = { timestamp: now, items };
+      return items;
+    }
+  } catch {}
+
+  return memoryCache ? memoryCache.items : [];
+}
+
+export function getKnowledgeBase(): CachedQuestion[] {
+  return memoryCache ? memoryCache.items : [];
+}
+
+// Search knowledge base cache for matching question
+function getPreAnsweredQuestion(questionText: string, options: string[], cachedItems: CachedQuestion[]): string[] | null {
+  if (cachedItems.length === 0) return null;
 
   try {
     const targetClean = questionText.toLowerCase().trim();
@@ -905,7 +813,7 @@ function getPreAnsweredQuestion(questionText: string, options: string[]): string
     let bestMatchAnswers: string[] | null = null;
     let highestOverlap = 0;
 
-    for (const item of items) {
+    for (const item of cachedItems) {
       // 1. Exact Normalized Match
       const isExactMatch = targetNormalized === item.normalized;
 
@@ -959,65 +867,35 @@ function getPreAnsweredQuestion(questionText: string, options: string[]): string
 export async function answerQuestion(
   question: string,
   options: string[],
-  type: "dropdown" | "checklist" | "radiobutton" | "text" | "unknown"
+  type: "dropdown" | "checklist" | "radiobutton" | "text" | "unknown",
+  customConfig?: AppConfig
 ): Promise<string[]> {
+  const cfg = customConfig || getConfig();
   try {
-    // 1. Priority: Check Local Knowledge Base Cache (imploye-question.csv)
-    const cachedAnswers = getPreAnsweredQuestion(question, options);
+    // 1. Priority: Check Google Sheets Knowledge Base Cache
+    const cachedItems = await ensureKnowledgeBaseLoaded(cfg);
+    const cachedAnswers = getPreAnsweredQuestion(question, options, cachedItems);
     if (cachedAnswers !== null) {
       return cachedAnswers;
     }
 
     // 2. Second Priority: Regex pattern rules
     const normType = type as QuestionType;
-    const regexAnswer = tryRegexAnswer(question, options, normType);
+    const regexAnswer = tryRegexAnswer(question, options, normType, cfg);
     if (regexAnswer !== null) {
+      // Asynchronously learn & append to Google Sheets knowledge base
+      const { appendQuestionToSheet } = require('./googleSheets');
+      appendQuestionToSheet(question, type, options, regexAnswer, cfg).catch(() => {});
       return regexAnswer;
     }
 
     // 3. Fallback: Ask Gemini LLM
-    return await askLLM(question, options, normType);
+    const llmAnswer = await askLLM(question, options, normType, cfg);
+    const { appendQuestionToSheet } = require('./googleSheets');
+    appendQuestionToSheet(question, type, options, llmAnswer, cfg).catch(() => {});
+    return llmAnswer;
   } catch (err) {
     console.error(`AI failed to answer "${question}":`, err);
-    return [options[0]]; // fallback to first option
-  }
-}
-
-// Only run main if executed directly
-if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
-  main().catch(console.error);
-}
-// ---------------------------------------------------------------------------
-// Adaptive Question Storage - auto-expand Screening Questions Database
-// ---------------------------------------------------------------------------
-export async function adaptiveAddQuestion(questionText: string, answer: string, type: string = 'radiobutton') {
-  try {
-    const questionsPath = path.join(process.cwd(), 'data', 'screening-questions.json');
-    let existing: any[] = [];
-    try {
-      if (fs.existsSync(questionsPath)) {
-        existing = JSON.parse(readFileSync(questionsPath, 'utf-8'));
-      }
-    } catch {}
-    const exists = existing.some((q: any) => (q.question || q.text || '').toLowerCase().trim() === questionText.toLowerCase().trim());
-    if (!exists && questionText.trim().length > 5) {
-      existing.push({
-        question: questionText,
-        answer,
-        type,
-        source: 'adaptive-bot',
-        addedAt: new Date().toISOString(),
-      });
-      fs.mkdirSync(path.dirname(questionsPath), { recursive: true });
-      writeFileSync(questionsPath, JSON.stringify(existing, null, 2));
-      console.log(`[Adaptive DB] New question added: ${questionText.slice(0, 60)}...`);
-    }
-    // Try to append to Google Sheets as well (non-blocking)
-    try {
-      const { appendRowToSheet } = await import('./googleSheets');
-      await appendRowToSheet([new Date().toISOString(), questionText, answer, type]);
-    } catch {}
-  } catch (e) {
-    console.warn('[Adaptive DB] Failed to add question:', e);
+    return [options[0] || ""]; // fallback to first option
   }
 }

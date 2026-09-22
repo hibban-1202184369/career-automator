@@ -1,5 +1,4 @@
 import { isJobAlreadyApplied, addAppliedJob } from '../googleSheets';
-import { appendQuestionToCsv } from '../csvHelper';
 import { answerQuestion } from '../questionAnswer';
 
 export interface BotMetrics {
@@ -181,15 +180,6 @@ export async function runLinkedinBot(
         onLog(`🏢 Perusahaan: "${cardInfo.company}" | 📍 ${cardInfo.location || 'Indonesia'}`);
         onLog(`🔗 URL: ${cardInfo.url}`);
 
-        // Filter pengecualian (exclude keywords) - cek sebelum buka panel detail
-        {
-          const __ex = (config as any).__isExcluded?.(cardInfo.title, cardInfo.company);
-          if (__ex) {
-            onLog(`🚫 Melewati "${cardInfo.title}" - Terfilter kata kunci pengecualian: "${__ex}".`);
-            continue;
-          }
-        }
-
         // Cek label pada kartu
         if (cardInfo.isAlreadyApplied) {
           onLog(`⏩ Melewati "${cardInfo.title}" - Sudah ada label 'Applied / Dilamar' pada kartu.`);
@@ -238,13 +228,6 @@ export async function runLinkedinBot(
         }
 
         const activeTitle = rightPaneDetail.officialTitle || cardInfo.title;
-        {
-          const __ex2 = (config as any).__isExcluded?.(activeTitle, cardInfo.company);
-          if (__ex2) {
-            onLog(`🚫 Melewati "${activeTitle}" - Terfilter kata kunci pengecualian (detail): "${__ex2}".`);
-            continue;
-          }
-        }
         const activeCompany = rightPaneDetail.officialCompany || cardInfo.company;
 
         // Pengecekan apakah kartu sama persis dengan kartu sebelumnya
@@ -552,10 +535,9 @@ export async function runLinkedinBot(
               continue;
             }
 
-            // Selesaikan via Q&A Engine (KB CSV -> Regex Deterministic -> Gemini LLM)
+            // Selesaikan via Q&A Engine (KB Google Sheets -> Regex Deterministic -> Gemini LLM)
             const chosenAnswers = await answerQuestion(qItem.question, qItem.options, qItem.type as any);
             onLog(`🤖 Pertanyaan: "${qItem.question}" -> Jawaban: [${chosenAnswers.join(' | ')}]`);
-            appendQuestionToCsv(qItem.question, qItem.type as any, qItem.options, chosenAnswers);
 
             // Injeksi hasil jawaban ke DOM modal LinkedIn
             await page.evaluate((targetQ: any, answers: string[]) => {

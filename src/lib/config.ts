@@ -4,10 +4,9 @@ import path from 'path';
 export interface AppConfig {
   spreadsheetId: string;
   sheetName: string;
+  questionsSheetName?: string;
   googleCredentialsJson: string;
-  geminiApiKey: string;
   searchKeywords: string;
-  excludeKeywords: string;
   location: string;
   minSalary: string;
   limitPerDay: number;
@@ -25,14 +24,7 @@ export interface AppConfig {
   concurrency: number;
   useSystemChrome?: boolean;
   customChromePath?: string;
-  browserWsEndpoint?: string;
   noticePeriod: string;
-  programStudi: string;
-  // Platform Session Cookies (JSON string array or raw cookie string)
-  glintsCookies: string;
-  jobstreetCookies: string;
-  linkedinCookies: string;
-  indeedCookies: string;
   // Candidate Profile Fields
   fullName: string;
   expectedSalary: number;
@@ -45,45 +37,40 @@ export interface AppConfig {
   linkedinUrl: string;
   phoneNumber: string;
   domicile: string;
-  knownTools: string;
+  geminiApiKey?: string;
 }
 
-const CONFIG_PATH = path.join(process.cwd(), 'config.json');
+const CONFIG_DIR = process.env.APP_USER_DATA || process.cwd();
+const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 
-const DEFAULT_CONFIG: AppConfig = {
+export const DEFAULT_CONFIG: AppConfig = {
   spreadsheetId: '',
   sheetName: 'Sheet1',
+  questionsSheetName: 'Sheet2',
   googleCredentialsJson: '',
   geminiApiKey: '',
   searchKeywords: '',
-  excludeKeywords: '',
   location: '',
   minSalary: '',
-  limitPerDay: 200,
+  limitPerDay: 50,
   limitMode: 'shared',
-  limitGlints: 80,
-  limitJobstreet: 75,
-  limitLinkedin: 50,
-  limitIndeed: 50,
+  limitGlints: 20,
+  limitJobstreet: 20,
+  limitLinkedin: 20,
+  limitIndeed: 20,
   enableGlints: true,
   enableJobstreet: true,
   enableLinkedin: true,
   enableIndeed: true,
   indeedNoJobTitleFilter: false,
-  debugTest: true,
-  concurrency: 3,
+  debugTest: false,
+  concurrency: 2,
   useSystemChrome: true,
   customChromePath: '',
-  browserWsEndpoint: '',
   noticePeriod: 'Immediately',
-  programStudi: '',
-  glintsCookies: '',
-  jobstreetCookies: '',
-  linkedinCookies: '',
-  indeedCookies: '',
   fullName: '',
   expectedSalary: 0,
-  educationLevel: '',
+  educationLevel: 'Sarjana (S1)',
   gpa: '',
   yearsOfExperience: 0,
   skills: '',
@@ -92,117 +79,55 @@ const DEFAULT_CONFIG: AppConfig = {
   linkedinUrl: '',
   phoneNumber: '',
   domicile: '',
-  knownTools: '',
 };
 
-// Helper to get value from env with fallback
-function getEnv(key: string, fallback: string = ''): string {
-  // Next.js exposes env vars via process.env at build/runtime
-  return process.env[key] || fallback;
-}
+// In-memory runtime fallback for serverless environments
+let memoryConfig: AppConfig | null = null;
 
-function getEnvNumber(key: string, fallback: number): number {
-  const val = process.env[key];
-  return val ? parseInt(val, 10) : fallback;
-}
+export function getConfig(override?: Partial<AppConfig>): AppConfig {
+  let base = DEFAULT_CONFIG;
 
-function getEnvBool(key: string, fallback: boolean): boolean {
-  const val = process.env[key];
-  if (!val) return fallback;
-  return val === 'true' || val === '1';
-}
-
-export function getConfig(): AppConfig {
-  // Start with defaults
-  let config: AppConfig = { ...DEFAULT_CONFIG };
-
-  // 1. Load from local config.json (development only)
-  if (process.env.NODE_ENV !== 'production') {
+  if (memoryConfig) {
+    base = memoryConfig;
+  } else {
     try {
       if (fs.existsSync(CONFIG_PATH)) {
         const data = fs.readFileSync(CONFIG_PATH, 'utf8');
-        config = { ...config, ...JSON.parse(data) };
+        const parsed = JSON.parse(data);
+        const resolved: AppConfig = { ...DEFAULT_CONFIG, ...parsed };
+        memoryConfig = resolved;
+        base = resolved;
       }
-    } catch (error) {
-      console.error('Error reading local config:', error);
+    } catch {
+      // Readonly / serverless environment fallback
     }
   }
 
-  // 2. Override with Environment Variables (Vercel Production)
-  // These take highest priority
-  const envMap: Record<string, keyof AppConfig> = {
-    'SPREADSHEET_ID': 'spreadsheetId',
-    'SHEET_NAME': 'sheetName',
-    'GOOGLE_CREDENTIALS_JSON': 'googleCredentialsJson',
-    'GEMINI_API_KEY': 'geminiApiKey',
-    'SEARCH_KEYWORDS': 'searchKeywords',
-    'EXCLUDE_KEYWORDS': 'excludeKeywords',
-    'LOCATION': 'location',
-    'MIN_SALARY': 'minSalary',
-    'LIMIT_PER_DAY': 'limitPerDay',
-    'LIMIT_MODE': 'limitMode',
-    'LIMIT_GLINTS': 'limitGlints',
-    'LIMIT_JOBSTREET': 'limitJobstreet',
-    'LIMIT_LINKEDIN': 'limitLinkedin',
-    'LIMIT_INDEED': 'limitIndeed',
-    'ENABLE_GLINTS': 'enableGlints',
-    'ENABLE_JOBSTREET': 'enableJobstreet',
-    'ENABLE_LINKEDIN': 'enableLinkedin',
-    'ENABLE_INDEED': 'enableIndeed',
-    'INDEED_NO_JOB_TITLE_FILTER': 'indeedNoJobTitleFilter',
-    'DEBUG_TEST': 'debugTest',
-    'CONCURRENCY': 'concurrency',
-    'USE_SYSTEM_CHROME': 'useSystemChrome',
-    'CUSTOM_CHROME_PATH': 'customChromePath',
-    'BROWSER_WS_ENDPOINT': 'browserWsEndpoint',
-    'NOTICE_PERIOD': 'noticePeriod',
-    'GLINTS_COOKIES': 'glintsCookies',
-    'JOBSTREET_COOKIES': 'jobstreetCookies',
-    'LINKEDIN_COOKIES': 'linkedinCookies',
-    'INDEED_COOKIES': 'indeedCookies',
-    'FULL_NAME': 'fullName',
-    'EXPECTED_SALARY': 'expectedSalary',
-    'EDUCATION_LEVEL': 'educationLevel',
-    'GPA': 'gpa',
-    'YEARS_OF_EXPERIENCE': 'yearsOfExperience',
-    'SKILLS': 'skills',
-    'PORTFOLIO_URL': 'portfolioUrl',
-    'GITHUB_URL': 'githubUrl',
-    'LINKEDIN_URL': 'linkedinUrl',
-    'PHONE_NUMBER': 'phoneNumber',
-    'DOMICILE': 'domicile',
-  };
-
-  for (const [envKey, configKey] of Object.entries(envMap)) {
-    const envVal = process.env[envKey];
-    if (envVal !== undefined && envVal !== '') {
-      const currentVal = config[configKey];
-      if (typeof currentVal === 'number') {
-        (config as any)[configKey] = parseInt(envVal, 10) || 0;
-      } else if (typeof currentVal === 'boolean') {
-        (config as any)[configKey] = envVal === 'true' || envVal === '1';
-      } else {
-        (config as any)[configKey] = envVal;
+  if (override && Object.keys(override).length > 0) {
+    const merged = { ...base };
+    for (const [key, value] of Object.entries(override)) {
+      if (value !== undefined && value !== null && value !== '') {
+        (merged as any)[key] = value;
       }
     }
+    return merged;
   }
 
-  return config;
+  return base;
 }
 
 export function saveConfig(config: Partial<AppConfig>): AppConfig {
-  // Only allow saving to file in development
-  if (process.env.NODE_ENV === 'production') {
-    console.warn('saveConfig: Cannot persist config in production (Vercel). Use Environment Variables.');
-    return { ...getConfig(), ...config };
-  }
+  const current = getConfig();
+  const updated = { ...current, ...config };
+  memoryConfig = updated;
+
   try {
-    const current = getConfig();
-    const updated = { ...current, ...config };
+    fs.mkdirSync(CONFIG_DIR, { recursive: true });
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(updated, null, 2), 'utf8');
-    return updated;
   } catch (error) {
-    console.error('Error writing config:', error);
-    throw new Error('Failed to save configuration');
+    // In serverless / read-only environments, writing to disk fails silently while memoryConfig holds the state
+    console.warn('Filesystem is read-only (serverless mode). Config saved in memory.');
   }
+
+  return updated;
 }
